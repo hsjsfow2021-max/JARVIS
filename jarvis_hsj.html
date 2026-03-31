@@ -1,0 +1,3372 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J.A.R.V.I.S — AI 비서</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600&display=swap');
+
+    :root {
+      --bg: #04080F;
+      --panel: rgba(10, 20, 40, 0.9);
+      --panel2: rgba(15, 28, 55, 0.7);
+      --border: rgba(0, 180, 255, 0.15);
+      --border2: rgba(0, 180, 255, 0.3);
+      --accent: #00B4FF;
+      --accent2: #00FFD4;
+      --accent3: #7B61FF;
+      --danger: #FF4466;
+      --warn: #FFB800;
+      --text: #C8E6FF;
+      --text2: #7BA8CC;
+      --text3: #3A6080;
+      --glow: rgba(0, 180, 255, 0.2);
+      --glow2: rgba(0, 255, 212, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(0, 180, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 180, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── TOPBAR ─── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      height: 54px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .15em;
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent);
+      margin-right: 16px;
+    }
+
+    .topbar-div {
+      width: 1px;
+      height: 22px;
+      background: var(--border2);
+      margin: 0 14px;
+    }
+
+    .topbar-name {
+      font-size: 13px;
+      color: var(--text2);
+      font-weight: 300;
+    }
+
+    .topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-ring {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent2);
+      animation: rp 2s ease-in-out infinite;
+    }
+
+    @keyframes rp {
+
+      0%,
+      100% {
+        box-shadow: 0 0 4px var(--accent2);
+      }
+
+      50% {
+        box-shadow: 0 0 14px var(--accent2), 0 0 28px rgba(0, 255, 212, .3);
+      }
+    }
+
+    .status-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      letter-spacing: .1em;
+      color: var(--accent2);
+    }
+
+    .topbar-time {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      color: var(--text3);
+      letter-spacing: .08em;
+    }
+
+    /* ─── MAIN ─── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: 218px;
+      flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(12px);
+      overflow-y: auto;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--border2);
+    }
+
+    .profile-sec {
+      padding: 18px 16px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .prof-wrap {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .prof-av {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent3), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 20px var(--glow);
+    }
+
+    .prof-ring {
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      opacity: .4;
+      animation: spin 8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .prof-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .prof-title {
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    .nav-sec {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-lbl {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 10px;
+      letter-spacing: .12em;
+      color: var(--text3);
+      padding: 0 16px 5px;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      cursor: pointer;
+      transition: all .15s;
+      border-left: 2px solid transparent;
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    .nav-item:hover {
+      background: rgba(0, 180, 255, .06);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: rgba(0, 180, 255, .1);
+      border-left-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .info-pan {
+      padding: 12px 16px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+
+    .info-lbl {
+      color: var(--text3);
+      min-width: 44px;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: .05em;
+    }
+
+    .info-val {
+      color: var(--text2);
+    }
+
+    /* ─── CONTENT ─── */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-view {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .panel-view.active {
+      display: flex;
+    }
+
+    /* ─── CHAT ─── */
+    .chat-msgs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-msgs::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .chat-msgs::-webkit-scrollbar-thumb {
+      background: var(--border2);
+    }
+
+    .welcome {
+      background: linear-gradient(135deg, rgba(0, 100, 255, .08), rgba(0, 200, 180, .04));
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 20px 22px;
+      text-align: center;
+      max-width: 540px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .w-tag {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px;
+      letter-spacing: .2em;
+      color: var(--accent2);
+      margin-bottom: 8px;
+    }
+
+    .welcome h2 {
+      font-size: 17px;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .welcome p {
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .qgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .qbtn {
+      background: rgba(0, 180, 255, .06);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: var(--text2);
+      cursor: pointer;
+      text-align: left;
+      transition: all .15s;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .qbtn:hover {
+      background: rgba(0, 180, 255, .12);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      animation: fadeUp .2s ease;
+    }
+
+    .msg-row.user {
+      flex-direction: row-reverse;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .msg-av {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .msg-av.ai {
+      background: linear-gradient(135deg, var(--accent3), var(--accent));
+      color: #fff;
+      font-size: 12px;
+      box-shadow: 0 0 12px var(--glow);
+    }
+
+    .msg-av.me {
+      background: var(--panel2);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      font-size: 10px;
+    }
+
+    .bubble {
+      max-width: 72%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+
+    .bubble.ai {
+      background: rgba(0, 180, 255, .07);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 3px;
+      color: var(--text);
+    }
+
+    .bubble.user {
+      background: rgba(123, 97, 255, .15);
+      border: 1px solid rgba(123, 97, 255, .25);
+      border-bottom-right-radius: 3px;
+      color: var(--text);
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 12px 14px;
+    }
+
+    .td {
+      width: 5px;
+      height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: tb 1s infinite;
+    }
+
+    .td:nth-child(2) {
+      animation-delay: .15s;
+    }
+
+    .td:nth-child(3) {
+      animation-delay: .3s;
+    }
+
+    @keyframes tb {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: .4;
+      }
+
+      30% {
+        transform: translateY(-5px);
+        opacity: 1;
+      }
+    }
+
+    /* ─── INPUT AREA ─── */
+    .chat-input-area {
+      padding: 10px 20px 14px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* 음성 인식 바 */
+    .voice-bar {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 14px;
+      margin-bottom: 8px;
+      background: rgba(255, 68, 102, .07);
+      border: 1px solid rgba(255, 68, 102, .3);
+      border-radius: 10px;
+    }
+
+    .voice-waves {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 20px;
+    }
+
+    .voice-waves span {
+      display: block;
+      width: 3px;
+      background: var(--danger);
+      border-radius: 2px;
+      animation: wa .7s ease-in-out infinite;
+    }
+
+    .voice-waves span:nth-child(1) {
+      height: 6px;
+      animation-delay: 0s;
+    }
+
+    .voice-waves span:nth-child(2) {
+      height: 14px;
+      animation-delay: .1s;
+    }
+
+    .voice-waves span:nth-child(3) {
+      height: 20px;
+      animation-delay: .2s;
+    }
+
+    .voice-waves span:nth-child(4) {
+      height: 14px;
+      animation-delay: .3s;
+    }
+
+    .voice-waves span:nth-child(5) {
+      height: 6px;
+      animation-delay: .4s;
+    }
+
+    @keyframes wa {
+
+      0%,
+      100% {
+        transform: scaleY(.5);
+        opacity: .6;
+      }
+
+      50% {
+        transform: scaleY(1);
+        opacity: 1;
+      }
+    }
+
+    .voice-bar-txt {
+      font-size: 12px;
+      color: var(--danger);
+      flex: 1;
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    .voice-stop {
+      background: rgba(255, 68, 102, .15);
+      border: 1px solid var(--danger);
+      border-radius: 6px;
+      color: var(--danger);
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all .15s;
+    }
+
+    .voice-stop:hover {
+      background: rgba(255, 68, 102, .25);
+    }
+
+    /* TTS 재생 인디케이터 */
+    .tts-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      margin-bottom: 8px;
+      background: rgba(0, 255, 212, .06);
+      border: 1px solid rgba(0, 255, 212, .2);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .tts-bar:hover {
+      background: rgba(0, 255, 212, .1);
+    }
+
+    .tts-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent2);
+      border-radius: 50%;
+      animation: tdot .6s ease-in-out infinite;
+    }
+
+    @keyframes tdot {
+
+      0%,
+      100% {
+        opacity: .3;
+        transform: scale(.8);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+
+    .tts-bar-txt {
+      font-size: 11px;
+      color: var(--accent2);
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: .05em;
+      flex: 1;
+    }
+
+    .tts-stop-icon {
+      font-size: 12px;
+      color: var(--accent2);
+    }
+
+    /* 입력 래퍼 */
+    .input-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      background: rgba(0, 180, 255, .05);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 9px 12px;
+      transition: border-color .2s;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(0, 180, 255, .1);
+    }
+
+    /* 마이크 버튼 */
+    .mic-btn {
+      width: 32px;
+      height: 32px;
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--text2);
+      transition: all .15s;
+    }
+
+    .mic-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 8px var(--glow);
+    }
+
+    .mic-btn.recording {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: rgba(255, 68, 102, .1);
+      animation: micpulse 1s ease-in-out infinite;
+    }
+
+    @keyframes micpulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 4px rgba(255, 68, 102, .4);
+      }
+
+      50% {
+        box-shadow: 0 0 14px rgba(255, 68, 102, .7), 0 0 28px rgba(255, 68, 102, .3);
+      }
+    }
+
+    /* TTS 토글 버튼 */
+    .tts-btn {
+      width: 32px;
+      height: 32px;
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--text2);
+      transition: all .15s;
+    }
+
+    .tts-btn:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .tts-btn.on {
+      border-color: var(--accent2);
+      color: var(--accent2);
+      background: rgba(0, 255, 212, .08);
+      box-shadow: 0 0 8px var(--glow2);
+    }
+
+    /* 텍스트 입력 */
+    #chatInput {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      font-family: 'Noto Sans KR', sans-serif;
+      resize: none;
+      max-height: 100px;
+      line-height: 1.5;
+      min-height: 20px;
+    }
+
+    #chatInput::placeholder {
+      color: var(--text3);
+    }
+
+    /* 전송 버튼 */
+    .send-btn {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all .15s;
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    .send-btn:hover {
+      background: var(--accent2);
+      transform: scale(1.05);
+    }
+
+    .send-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .send-btn svg {
+      width: 14px;
+      height: 14px;
+      color: var(--bg);
+    }
+
+    .input-hint {
+      font-size: 10px;
+      color: var(--text3);
+      text-align: center;
+      margin-top: 6px;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: .04em;
+    }
+
+    /* ─── PANEL HEADER ─── */
+    .pan-header {
+      padding: 20px 20px 0;
+    }
+
+    .pan-header h2 {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      letter-spacing: .15em;
+      color: var(--accent);
+      margin-bottom: 3px;
+    }
+
+    .pan-header p {
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    /* ─── SCROLL PANELS ─── */
+    .scroll-pan {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px 20px;
+    }
+
+    .scroll-pan::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .scroll-pan::-webkit-scrollbar-thumb {
+      background: var(--border2);
+    }
+
+    /* ─── MARKETING ─── */
+    .mkt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .mkt-card {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      transition: border-color .2s;
+    }
+
+    .mkt-card:hover {
+      border-color: var(--border2);
+    }
+
+    .mkt-card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .mkt-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .ic-blue {
+      background: rgba(0, 180, 255, .12);
+    }
+
+    .ic-green {
+      background: rgba(0, 255, 212, .1);
+    }
+
+    .ic-purple {
+      background: rgba(123, 97, 255, .12);
+    }
+
+    .ic-warn {
+      background: rgba(255, 184, 0, .1);
+    }
+
+    .mkt-card-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .mkt-card-desc {
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .sel {
+      width: 100%;
+      background: rgba(0, 180, 255, .06);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 12px;
+      padding: 7px 10px;
+      margin-bottom: 7px;
+      outline: none;
+      appearance: none;
+    }
+
+    .sel option {
+      background: #0a1020;
+    }
+
+    .gen-btn {
+      width: 100%;
+      background: linear-gradient(90deg, rgba(0, 180, 255, .15), rgba(0, 255, 212, .08));
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--accent);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 8px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .gen-btn:hover {
+      background: rgba(0, 180, 255, .2);
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    .gen-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    /* ─── RESULT BOX ─── */
+    .res-sec {
+      margin-top: 18px;
+    }
+
+    .res-box {
+      background: var(--panel2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .res-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 15px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 180, 255, .05);
+    }
+
+    .res-title {
+      font-size: 11px;
+      color: var(--accent);
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text2);
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all .15s;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .res-body {
+      padding: 15px;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.75;
+      white-space: pre-wrap;
+      min-height: 80px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .res-body::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .res-body.generating {
+      color: var(--text3);
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .spinner {
+      width: 13px;
+      height: 13px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* ─── CS ─── */
+    .cs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .cs-card {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .cs-card:hover {
+      border-color: var(--accent);
+      background: rgba(0, 180, 255, .05);
+    }
+
+    .cs-lbl {
+      font-size: 10px;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: .1em;
+      color: var(--accent2);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .cs-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .cs-desc {
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    /* ─── FAQ ─── */
+    .faq-item {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color .15s;
+    }
+
+    .faq-item:hover {
+      border-color: var(--border2);
+    }
+
+    .faq-q {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 15px;
+      cursor: pointer;
+      font-size: 13px;
+      gap: 12px;
+    }
+
+    .faq-arrow {
+      color: var(--accent);
+      font-size: 11px;
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+
+    .faq-item.open .faq-arrow {
+      transform: rotate(90deg);
+    }
+
+    .faq-a {
+      display: none;
+      padding: 0 15px 13px;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.7;
+      border-top: 1px solid var(--border);
+      padding-top: 11px;
+    }
+
+    .faq-item.open .faq-a {
+      display: block;
+    }
+
+    /* ─── SCHEDULE ─── */
+    .sched-form {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      margin-bottom: 18px;
+    }
+
+    .field-lbl {
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 3px;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .field-inp,
+    .field-sel,
+    .field-ta {
+      width: 100%;
+      background: rgba(0, 180, 255, .05);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .field-inp:focus,
+    .field-sel:focus,
+    .field-ta:focus {
+      border-color: var(--accent);
+    }
+
+    .field-sel option {
+      background: #0a1020;
+    }
+
+    .field-ta {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .sched-gen-btn {
+      width: 100%;
+      background: linear-gradient(90deg, rgba(0, 180, 255, .2), rgba(0, 255, 212, .1));
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      color: var(--accent);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px;
+      cursor: pointer;
+      transition: all .15s;
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    .sched-gen-btn:hover {
+      background: rgba(0, 180, 255, .25);
+    }
+
+    /* ─── EMAIL PROMO ─── */
+    .ep-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .ep-stat {
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .ep-stat-num {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .ep-stat-lbl {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 2px;
+    }
+
+    .ep-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .ep-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .ep-tag-grp {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .ep-tag {
+      background: rgba(0, 180, 255, .07);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all .15s;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .ep-tag.on {
+      background: rgba(0, 180, 255, .2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .ep-gen-btn {
+      width: 100%;
+      background: linear-gradient(90deg, rgba(0, 180, 255, .18), rgba(0, 255, 212, .1));
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      color: var(--accent);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 12px;
+      cursor: pointer;
+      transition: all .15s;
+      box-shadow: 0 0 12px var(--glow);
+    }
+
+    .ep-gen-btn:hover {
+      background: rgba(0, 180, 255, .25);
+    }
+
+    .ep-gen-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .ep-preview {
+      background: var(--panel2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 18px;
+    }
+
+    .ep-prev-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 15px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 180, 255, .05);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .ep-tabs {
+      display: flex;
+      gap: 5px;
+    }
+
+    .ep-tab {
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border2);
+      cursor: pointer;
+      color: var(--text2);
+      background: none;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all .15s;
+    }
+
+    .ep-tab.on {
+      background: rgba(0, 180, 255, .15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .ep-body-area {
+      padding: 15px;
+      min-height: 120px;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    .ep-body-area::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .ep-subj {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      padding-bottom: 9px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ep-subj-lbl {
+      color: var(--accent2);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .ep-subj-val {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .ep-mail-body {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.85;
+      white-space: pre-wrap;
+    }
+
+    .ep-html-prev {
+      background: #fff;
+      border-radius: 8px;
+      padding: 18px;
+      color: #1a1a2e;
+      font-size: 13px;
+      line-height: 1.75;
+      min-height: 120px;
+    }
+
+    /* ── DB 패널 공통 ── */
+    .db-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .db-table-wrap {
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+
+    .db-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .db-table th {
+      padding: 7px 10px;
+      text-align: left;
+      color: var(--accent);
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: .06em;
+      border-bottom: 1px solid var(--border2);
+      white-space: nowrap;
+    }
+
+    .db-table td {
+      padding: 7px 10px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .db-table tr:hover td {
+      background: rgba(0, 180, 255, .04);
+    }
+
+    .db-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .badge-customer {
+      background: rgba(0, 180, 255, .15);
+      color: var(--accent);
+    }
+
+    .badge-partner {
+      background: rgba(0, 255, 212, .12);
+      color: var(--accent2);
+    }
+
+    .badge-vip {
+      background: rgba(255, 184, 0, .15);
+      color: var(--warn);
+    }
+
+    .badge-etc {
+      background: rgba(255, 255, 255, .08);
+      color: var(--text2);
+    }
+
+    .db-stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .db-stat {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .db-stat-num {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .db-stat-lbl {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 1px;
+    }
+
+    .db-section {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .db-section-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      letter-spacing: .1em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .db-empty {
+      font-size: 12px;
+      color: var(--text3);
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .status-접수 {
+      color: var(--accent);
+    }
+
+    .status-처리중 {
+      color: var(--warn);
+    }
+
+    .status-처리완료 {
+      color: var(--accent2);
+    }
+
+    .inq-card {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      transition: border-color .15s;
+    }
+
+    .inq-card:hover {
+      border-color: var(--border2);
+    }
+
+    .gas-setup-box {
+      background: rgba(255, 184, 0, .07);
+      border: 1px solid rgba(255, 184, 0, .25);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .gas-setup-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--warn);
+      margin-bottom: 8px;
+    }
+
+    .gas-setup-step {
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.8;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══ TOPBAR ═══ -->
+  <div class="topbar">
+    <div class="topbar-logo">J.A.R.V.I.S</div>
+    <div class="topbar-div"></div>
+    <div class="topbar-name">황순주 AI 비서 · 여누솔루션</div>
+    <div class="topbar-right">
+      <div class="status-ring"></div>
+      <span class="status-label">ONLINE</span>
+      <div class="topbar-time" id="clock">--:--:--</div>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar">
+      <div class="profile-sec">
+        <div class="prof-wrap">
+          <div class="prof-av">황</div>
+          <div class="prof-ring"></div>
+        </div>
+        <div class="prof-name">황순주</div>
+        <div class="prof-title">여누솔루션 · 스마트제조 전문가</div>
+      </div>
+
+      <div class="nav-sec">
+        <div class="nav-lbl">기능 메뉴</div>
+        <div class="nav-item active" onclick="nav('chat',this)">
+          <div class="nav-icon">💬</div>AI 대화
+        </div>
+        <div class="nav-item" onclick="nav('mkt',this)">
+          <div class="nav-icon">📢</div>마케팅 자료 생성
+        </div>
+        <div class="nav-item" onclick="nav('cs',this)">
+          <div class="nav-icon">🎧</div>CS 응대 템플릿
+        </div>
+        <div class="nav-item" onclick="nav('faq',this)">
+          <div class="nav-icon">❓</div>FAQ
+        </div>
+        <div class="nav-item" onclick="nav('sched',this)">
+          <div class="nav-icon">📅</div>일정·미팅 관리
+        </div>
+        <div class="nav-item" onclick="nav('email',this)">
+          <div class="nav-icon">✉️</div>이메일 홍보
+        </div>
+        <div class="nav-lbl" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">구글시트 DB</div>
+        <div class="nav-item" onclick="nav('db',this)">
+          <div class="nav-icon">🗄️</div>고객·협력사 DB
+        </div>
+        <div class="nav-item" onclick="nav('bulkmail',this)">
+          <div class="nav-icon">📬</div>대량 메일 발송
+        </div>
+        <div class="nav-item" onclick="nav('inquiry',this)">
+          <div class="nav-icon">📥</div>문의 관리
+        </div>
+      </div>
+
+      <div class="info-pan">
+        <div class="nav-lbl" style="padding:0 0 6px">연락처</div>
+        <div class="info-row"><span class="info-lbl">소속</span><span class="info-val">여누솔루션</span></div>
+        <div class="info-row"><span class="info-lbl">직책</span><span class="info-val">스마트제조 컨설턴트</span></div>
+        <div class="info-row"><span class="info-lbl">전문</span><span class="info-val">SFOW2.0 · DAS · DX</span></div>
+      </div>
+
+      <div class="info-pan" style="border-top:1px solid var(--border);">
+        <div class="nav-lbl" style="padding:0 0 6px">구글시트 연동</div>
+        <div id="gas-status-sidebar" style="font-size:11px;margin-bottom:6px;"></div>
+        <button onclick="openGasSettings()" style="
+        width:100%;background:rgba(0,180,255,.08);border:1px solid var(--border2);
+        border-radius:7px;color:var(--accent);font-family:'Noto Sans KR',sans-serif;
+        font-size:11px;padding:6px;cursor:pointer;transition:all .15s;
+      " onmouseover="this.style.background='rgba(0,180,255,.16)'"
+          onmouseout="this.style.background='rgba(0,180,255,.08)'">
+          ⚙ 웹 앱 URL 설정 / 변경
+        </button>
+      </div>
+
+      <div class="info-pan" style="border-top:1px solid var(--border);">
+        <div class="nav-lbl" style="padding:0 0 6px">AI 설정</div>
+        <div id="api-status-sidebar" style="font-size:11px;margin-bottom:6px;"></div>
+        <button onclick="openApiSettings()" style="
+        width:100%;background:rgba(123,97,255,.08);border:1px solid rgba(123,97,255,.3);
+        border-radius:7px;color:var(--accent3);font-family:'Noto Sans KR',sans-serif;
+        font-size:11px;padding:6px;cursor:pointer;transition:all .15s;
+      " onmouseover="this.style.background='rgba(123,97,255,.16)'"
+          onmouseout="this.style.background='rgba(123,97,255,.08)'">
+          🔑 API 키 설정 / 변경
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CONTENT ── -->
+    <div class="content">
+
+      <!-- ① 채팅 -->
+      <div class="panel-view active" id="panel-chat">
+
+        <!-- API 키 미설정 배너 -->
+        <div id="api-key-banner" style="
+        display:none;flex-shrink:0;
+        background:rgba(123,97,255,.1);border-bottom:1px solid rgba(123,97,255,.25);
+        padding:10px 18px;display:flex;align-items:center;gap:10px;
+      ">
+          <span style="font-size:13px;">🔑</span>
+          <span style="font-size:12px;color:#AFA9EC;flex:1;">AI 대화 기능을 사용하려면 <b style="color:var(--accent3);">Anthropic
+              API 키</b>가 필요합니다</span>
+          <button onclick="openApiSettings()" style="
+          background:rgba(123,97,255,.2);border:1px solid rgba(123,97,255,.4);
+          border-radius:6px;color:var(--accent3);font-size:11px;padding:4px 12px;
+          cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;
+        ">키 입력하기</button>
+        </div>
+
+        <div class="chat-msgs" id="chatMsgs">
+          <div class="welcome">
+            <div class="w-tag">J.A.R.V.I.S · 황순주 AI 비서 가동</div>
+            <h2>무엇을 도와드릴까요?</h2>
+            <p>SFOW2.0·DAS 도입 상담, 지원사업 안내, 마케팅 문의 등<br>무엇이든 말씀해 주세요.</p>
+            <div class="qgrid">
+              <button class="qbtn" onclick="qs('SFOW2.0이 무엇인지 설명해줘')">💡 SFOW2.0 소개</button>
+              <button class="qbtn" onclick="qs('2026 소공인 스마트제조 지원사업 정보 알려줘')">📋 지원사업 안내</button>
+              <button class="qbtn" onclick="qs('여누솔루션 데이터 연동은 어떻게 이루어지나요?')">🔗 데이터 연동 소개</button>
+              <button class="qbtn" onclick="qs('도입 비용과 절차가 궁금해요')">💰 비용·절차 문의</button>
+              <button class="qbtn" onclick="qs('여누솔루션 황순주 대표에게 연락하고 싶어요')">📞 상담 신청</button>
+              <button class="qbtn" onclick="qs('스마트공장 구축시 가장 중요한 것은?')">🔍 스마트팩토리 핵심</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 입력 영역 -->
+        <div class="chat-input-area">
+          <!-- 음성인식 바 -->
+          <div class="voice-bar" id="voiceBar">
+            <div class="voice-waves"><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="voice-bar-txt" id="voiceTxt">듣고 있습니다...</div>
+            <button class="voice-stop" onclick="stopSTT()">■ 중지</button>
+          </div>
+          <!-- TTS 재생 바 -->
+          <div class="tts-bar" id="ttsBar" onclick="stopTTS()">
+            <div class="tts-dot"></div>
+            <div class="tts-bar-txt">J.A.R.V.I.S 음성 응답 중 — 클릭하여 중지</div>
+            <div class="tts-stop-icon">■</div>
+          </div>
+          <!-- 입력창 -->
+          <div class="input-wrap">
+            <button class="mic-btn" id="micBtn" onclick="toggleSTT()" title="음성 입력 (마이크)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+            </button>
+            <textarea id="chatInput" rows="1" placeholder="메시지 입력 또는 🎙 마이크 버튼으로 음성 입력..." onkeydown="onKey(event)"
+              oninput="resize(this)"></textarea>
+            <button class="tts-btn" id="ttsBtn" onclick="toggleTTS()" title="음성 응답 ON/OFF">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </svg>
+            </button>
+            <button class="send-btn" id="sendBtn" onclick="sendChat()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </div>
+          <div class="input-hint">ENTER 전송 · Shift+ENTER 줄바꿈 · 🎙 음성입력 · 🔊 음성응답 ON/OFF</div>
+        </div>
+      </div>
+
+      <!-- ② 마케팅 -->
+      <div class="panel-view" id="panel-mkt">
+        <div class="pan-header">
+          <h2>MARKETING · GENERATOR</h2>
+          <p>채널별 마케팅 자료를 AI가 자동으로 생성합니다</p>
+        </div>
+        <div class="scroll-pan">
+          <div class="mkt-grid">
+            <div class="mkt-card">
+              <div class="mkt-card-top">
+                <div class="mkt-icon ic-blue">📱</div>
+                <div class="mkt-card-title">SNS 포스팅</div>
+              </div>
+              <div class="mkt-card-desc">인스타그램·링크드인·페이스북용 홍보 게시글 생성</div>
+              <select class="sel" id="sns-ch">
+                <option value="인스타그램">인스타그램</option>
+                <option value="링크드인">링크드인</option>
+                <option value="페이스북">페이스북</option>
+                <option value="카카오톡 채널">카카오톡 채널</option>
+              </select>
+              <select class="sel" id="sns-tp">
+                <option value="SFOW2.0 소개">SFOW2.0 소개</option>
+                <option value="데이터 연동 소개">데이터 연동 소개</option>
+                <option value="2026 소공인 지원사업">2026 소공인 지원사업</option>
+                <option value="도입 성공 사례">도입 성공 사례</option>
+                <option value="스마트팩토리 효과">스마트팩토리 효과</option>
+              </select>
+              <button class="gen-btn" onclick="genMkt('sns')">✦ SNS 포스팅 생성</button>
+            </div>
+            <div class="mkt-card">
+              <div class="mkt-card-top">
+                <div class="mkt-icon ic-green">📧</div>
+                <div class="mkt-card-title">이메일 뉴스레터</div>
+              </div>
+              <div class="mkt-card-desc">고객 대상 이메일 마케팅 콘텐츠를 제목·본문 포함 작성</div>
+              <select class="sel" id="em-tp">
+                <option value="신규 고객 유치">신규 고객 유치</option>
+                <option value="기존 고객 업데이트">기존 고객 업데이트</option>
+                <option value="지원사업 안내">지원사업 안내</option>
+                <option value="세일즈 팔로업">세일즈 팔로업</option>
+              </select>
+              <select class="sel" id="em-ind">
+                <option value="식품제조업">식품제조업 대상</option>
+                <option value="금속가공업">금속가공업 대상</option>
+                <option value="소비재 제조업">소비재 제조업 대상</option>
+                <option value="전체 제조업">전체 제조업 대상</option>
+              </select>
+              <button class="gen-btn" onclick="genMkt('email')">✦ 이메일 콘텐츠 생성</button>
+            </div>
+            <div class="mkt-card">
+              <div class="mkt-card-top">
+                <div class="mkt-icon ic-purple">📝</div>
+                <div class="mkt-card-title">블로그·보도자료</div>
+              </div>
+              <div class="mkt-card-desc">SEO 최적화 블로그 포스트 또는 보도자료 초안 작성</div>
+              <select class="sel" id="bl-tp">
+                <option value="블로그 포스트(SEO)">블로그 포스트 (SEO)</option>
+                <option value="보도자료">보도자료</option>
+                <option value="기고 칼럼">기고 칼럼</option>
+              </select>
+              <select class="sel" id="bl-tpc">
+                <option value="스마트제조 트렌드 2026">스마트제조 트렌드 2026</option>
+                <option value="SFOW2.0 도입 효과">SFOW2.0 도입 효과</option>
+                <option value="소공인 디지털 전환 방법">소공인 디지털 전환 방법</option>
+                <option value="식품 HACCP 자동화">식품 HACCP 자동화</option>
+              </select>
+              <button class="gen-btn" onclick="genMkt('blog')">✦ 블로그·보도자료 생성</button>
+            </div>
+            <div class="mkt-card">
+              <div class="mkt-card-top">
+                <div class="mkt-icon ic-warn">🎯</div>
+                <div class="mkt-card-title">제안서·소개자료</div>
+              </div>
+              <div class="mkt-card-desc">고객사 미팅용 제안서 요약 및 제품 소개 텍스트 생성</div>
+              <select class="sel" id="pr-tp">
+                <option value="제품 소개(1페이지)">제품 소개 (1페이지)</option>
+                <option value="도입 제안서 요약">도입 제안서 요약</option>
+                <option value="견적 커버레터">견적 커버레터</option>
+                <option value="지원사업 사업계획서 요약">지원사업 사업계획서 요약</option>
+              </select>
+              <select class="sel" id="pr-ind">
+                <option value="식품제조업">식품제조업</option>
+                <option value="금속가공업">금속가공업</option>
+                <option value="소비재 제조업">소비재 제조업</option>
+              </select>
+              <button class="gen-btn" onclick="genMkt('proposal')">✦ 제안서 자료 생성</button>
+            </div>
+          </div>
+          <div class="res-sec" id="mkt-res" style="display:none">
+            <div class="res-box">
+              <div class="res-hdr"><span class="res-title" id="mkt-res-title">생성 결과</span><button class="copy-btn"
+                  onclick="cp('mkt-res-body',this)">복사</button></div>
+              <div class="res-body" id="mkt-res-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ CS -->
+      <div class="panel-view" id="panel-cs">
+        <div class="pan-header">
+          <h2>CS · RESPONSE</h2>
+          <p>고객 유형별 CS 응대 메시지를 AI가 생성합니다</p>
+        </div>
+        <div class="scroll-pan">
+          <div class="cs-grid">
+            <div class="cs-card" onclick="genCS('문의 첫 응대 — 견적 요청 고객')">
+              <div class="cs-lbl">견적 문의</div>
+              <div class="cs-title">초기 견적 요청 응대</div>
+              <div class="cs-desc">처음 연락한 고객에게 견적 안내 및 상담 일정 잡기</div>
+            </div>
+            <div class="cs-card" onclick="genCS('도입 후 불만 고객 응대 — 기능 불편 호소')">
+              <div class="cs-lbl">불만 처리</div>
+              <div class="cs-title">불만 고객 응대</div>
+              <div class="cs-desc">시스템 불편, 기능 문의 등 불만 고객 대응 메시지</div>
+            </div>
+            <div class="cs-card" onclick="genCS('지원사업 탈락 후 재도전 안내 고객 응대')">
+              <div class="cs-lbl">지원사업</div>
+              <div class="cs-title">지원사업 탈락 후 안내</div>
+              <div class="cs-desc">미선정 고객에게 재도전 및 대안 안내</div>
+            </div>
+            <div class="cs-card" onclick="genCS('장기 미결 상담 고객 팔로업 메시지')">
+              <div class="cs-lbl">팔로업</div>
+              <div class="cs-title">미결 상담 팔로업</div>
+              <div class="cs-desc">상담 후 결정 미루는 고객 리마인드 메시지</div>
+            </div>
+            <div class="cs-card" onclick="genCS('도입 완료 고객에게 사후 만족도 확인 및 추가 서비스 안내')">
+              <div class="cs-lbl">유지관리</div>
+              <div class="cs-title">도입 후 만족도 확인</div>
+              <div class="cs-desc">도입 완료 고객 사후 관리 및 추가 서비스 안내</div>
+            </div>
+            <div class="cs-card" onclick="genCS('기존 만족 고객에게 지인 소개(레퍼럴) 요청')">
+              <div class="cs-lbl">레퍼럴</div>
+              <div class="cs-title">기존 고객 레퍼럴 요청</div>
+              <div class="cs-desc">만족한 고객에게 지인 소개 부탁 메시지</div>
+            </div>
+          </div>
+          <div class="res-sec" id="cs-res" style="display:none">
+            <div class="res-box">
+              <div class="res-hdr"><span class="res-title" id="cs-res-title">CS 응대 메시지</span><button class="copy-btn"
+                  onclick="cp('cs-res-body',this)">복사</button></div>
+              <div class="res-body" id="cs-res-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ FAQ -->
+      <div class="panel-view" id="panel-faq">
+        <div class="pan-header">
+          <h2>FAQ · 자주 묻는 질문</h2>
+          <p>고객이 가장 많이 묻는 질문과 답변입니다</p>
+        </div>
+        <div class="scroll-pan" id="faqList"></div>
+      </div>
+
+      <!-- ⑤ 일정 -->
+      <div class="panel-view" id="panel-sched">
+        <div class="pan-header">
+          <h2>SCHEDULE · 미팅 관리</h2>
+          <p>미팅 안내 메시지를 자동으로 작성합니다</p>
+        </div>
+        <div class="scroll-pan">
+          <div class="sched-form">
+            <div class="two-col">
+              <div>
+                <div class="field-lbl">고객사명</div><input class="field-inp" id="sc-co" placeholder="예) ○○식품 주식회사">
+              </div>
+              <div>
+                <div class="field-lbl">담당자명</div><input class="field-inp" id="sc-nm" placeholder="예) 김대표">
+              </div>
+            </div>
+            <div class="two-col">
+              <div>
+                <div class="field-lbl">미팅 유형</div>
+                <select class="field-sel" id="sc-mt">
+                  <option>초기 상담 미팅</option>
+                  <option>현장 진단 방문</option>
+                  <option>솔루션 데모</option>
+                  <option>견적 협의</option>
+                  <option>계약 미팅</option>
+                  <option>도입 후 점검</option>
+                </select>
+              </div>
+              <div>
+                <div class="field-lbl">소통 채널</div>
+                <select class="field-sel" id="sc-ch">
+                  <option>이메일</option>
+                  <option>카카오톡</option>
+                  <option>문자메시지</option>
+                  <option>전화 스크립트</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <div class="field-lbl">미팅 일시 및 장소 (선택)</div><input class="field-inp" id="sc-dt"
+                placeholder="예) 2026년 4월 15일(화) 오후 2시, 고객사 회의실">
+            </div>
+            <div>
+              <div class="field-lbl">특이사항 (선택)</div><textarea class="field-ta" id="sc-note"
+                placeholder="예) 식품제조업, 수기 중심, 지원사업 관심"></textarea>
+            </div>
+            <button class="sched-gen-btn" onclick="genSched()">✦ 미팅 안내 메시지 생성</button>
+          </div>
+          <div class="res-sec" id="sc-res" style="display:none">
+            <div class="res-box">
+              <div class="res-hdr"><span class="res-title" id="sc-res-title">미팅 안내 메시지</span><button class="copy-btn"
+                  onclick="cp('sc-res-body',this)">복사</button></div>
+              <div class="res-body" id="sc-res-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑥ 이메일 홍보 -->
+      <div class="panel-view" id="panel-email">
+        <div class="pan-header">
+          <h2>EMAIL · 홍보 메일 생성</h2>
+          <p>타겟 고객별 홍보 이메일을 AI가 즉시 작성합니다</p>
+        </div>
+        <div class="scroll-pan">
+          <div class="ep-stats">
+            <div class="ep-stat">
+              <div class="ep-stat-num">6+</div>
+              <div class="ep-stat-lbl">이메일 유형</div>
+            </div>
+            <div class="ep-stat">
+              <div class="ep-stat-num">4</div>
+              <div class="ep-stat-lbl">타겟 업종</div>
+            </div>
+            <div class="ep-stat">
+              <div class="ep-stat-num">AI</div>
+              <div class="ep-stat-lbl">자동 생성</div>
+            </div>
+            <div class="ep-stat">
+              <div class="ep-stat-num">1클릭</div>
+              <div class="ep-stat-lbl">즉시 복사</div>
+            </div>
+          </div>
+          <div class="ep-form">
+            <div class="ep-row">
+              <div>
+                <div class="field-lbl">발송 목적</div>
+                <select class="field-sel" id="ep-pur">
+                  <option value="신규 고객 첫 접촉 홍보">신규 고객 첫 접촉</option>
+                  <option value="SFOW2.0 신제품 소개">SFOW2.0 신제품 소개</option>
+                  <option value="2026 소공인 지원사업 안내 및 도입 유도">지원사업 안내·도입 유도</option>
+                  <option value="기존 상담 고객 팔로업">기존 상담 고객 팔로업</option>
+                  <option value="도입 후 업그레이드 안내">도입 후 업그레이드 안내</option>
+                  <option value="이벤트·세미나 초대">이벤트·세미나 초대</option>
+                </select>
+              </div>
+              <div>
+                <div class="field-lbl">대상 업종</div>
+                <select class="field-sel" id="ep-ind">
+                  <option value="식품제조업">식품제조업</option>
+                  <option value="금속가공·뿌리업종">금속가공·뿌리업종</option>
+                  <option value="소비재·소량다품종 제조업">소비재·소량다품종</option>
+                  <option value="전체 제조업 소공인">전체 제조업 소공인</option>
+                </select>
+              </div>
+            </div>
+            <div class="ep-row">
+              <div>
+                <div class="field-lbl">수신자 호칭 (선택)</div><input class="field-inp" id="ep-nm" placeholder="예) 김대표님, 담당자님">
+              </div>
+              <div>
+                <div class="field-lbl">회사명 (선택)</div><input class="field-inp" id="ep-co" placeholder="예) ○○식품">
+              </div>
+            </div>
+            <div>
+              <div class="field-lbl">강조 메시지 태그</div>
+              <div class="ep-tag-grp" id="ep-tags">
+                <span class="ep-tag on" onclick="this.classList.toggle('on')">국비 최대 4,200만원</span>
+                <span class="ep-tag on" onclick="this.classList.toggle('on')">SaaS 즉시 도입</span>
+                <span class="ep-tag" onclick="this.classList.toggle('on')">SFOW2.0 소개</span>
+                <span class="ep-tag" onclick="this.classList.toggle('on')">데이터 자동 수집</span>
+                <span class="ep-tag" onclick="this.classList.toggle('on')">무료 상담 제공</span>
+                <span class="ep-tag" onclick="this.classList.toggle('on')">스마트 HACCP</span>
+                <span class="ep-tag" onclick="this.classList.toggle('on')">가동률 실시간 확인</span>
+                <span class="ep-tag" onclick="this.classList.toggle('on')">수기 기록 완전 제거</span>
+              </div>
+            </div>
+            <div>
+              <div class="field-lbl">톤 선택</div>
+              <div class="ep-tag-grp" id="ep-tones">
+                <span class="ep-tag on" data-tone="전문적이고 신뢰감 있는" onclick="selTone(this)">전문·신뢰</span>
+                <span class="ep-tag" data-tone="친근하고 따뜻한" onclick="selTone(this)">친근·따뜻</span>
+                <span class="ep-tag" data-tone="간결하고 임팩트 있는" onclick="selTone(this)">간결·임팩트</span>
+                <span class="ep-tag" data-tone="긴급감을 주는" onclick="selTone(this)">긴급감</span>
+              </div>
+            </div>
+            <button class="ep-gen-btn" id="ep-gen-btn" onclick="genEmail()">✦ 홍보 이메일 생성</button>
+          </div>
+          <div class="ep-preview" id="ep-prev" style="display:none">
+            <div class="ep-prev-hdr">
+              <div class="ep-tabs">
+                <button class="ep-tab on" onclick="epTab('txt',this)">텍스트 보기</button>
+                <button class="ep-tab" onclick="epTab('html',this)">HTML 미리보기</button>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="copy-btn" onclick="cp('ep-body-txt',this)">전체 복사</button>
+                <button class="copy-btn" id="ep-subj-copy" onclick="cpSubj()">제목만 복사</button>
+              </div>
+            </div>
+            <div class="ep-body-area">
+              <div class="ep-subj" id="ep-subj" style="display:none"><span class="ep-subj-lbl">제목</span><span
+                  class="ep-subj-val" id="ep-subj-val"></span></div>
+              <div id="ep-body-txt" class="ep-mail-body"></div>
+              <div id="ep-body-html" class="ep-html-prev" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑦ 고객·협력사 DB -->
+      <div class="panel-view" id="panel-db">
+        <div class="pan-header">
+          <h2>DB · 고객·협력사 관리</h2>
+          <p>구글시트와 실시간 연동 — 조회·검색·신규 등록</p>
+        </div>
+        <div class="scroll-pan">
+
+          <!-- GAS URL 설정 박스 (항상 표시) -->
+          <div class="gas-setup-box" id="db-setup-notice">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div class="gas-setup-title" style="margin-bottom:0;">⚙️ Google Apps Script 웹 앱 URL 설정</div>
+              <button onclick="toggleGasBox()" id="gas-toggle-btn" style="
+              background:none;border:1px solid rgba(255,184,0,.3);border-radius:6px;
+              color:var(--warn);font-size:10px;padding:3px 8px;cursor:pointer;
+              font-family:'Noto Sans KR',sans-serif;
+            ">접기</button>
+            </div>
+            <div id="gas-box-body">
+              <div class="gas-setup-step">
+                Apps Script 배포 후 <b>웹 앱 URL</b>을 입력하세요<br>
+                형식: <code
+                  style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;font-size:10px;">https://script.google.com/macros/s/…/exec</code>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <input class="field-inp" id="gas-url-input" placeholder="웹 앱 URL 붙여넣기..."
+                  style="flex:1;font-size:12px;">
+                <button class="gen-btn" style="width:60px;flex-shrink:0;" onclick="saveGasUrl()">저장</button>
+                <button onclick="clearGasUrl()" style="
+                background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.25);
+                border-radius:8px;color:var(--danger);font-size:11px;padding:0 10px;
+                cursor:pointer;font-family:'Noto Sans KR',sans-serif;flex-shrink:0;
+              ">초기화</button>
+              </div>
+              <div id="gas-save-msg" style="font-size:11px;margin-top:6px;"></div>
+            </div>
+          </div>
+
+          <!-- 통계 카드 -->
+          <div class="db-stat-row">
+            <div class="db-stat">
+              <div class="db-stat-num" id="stat-total">—</div>
+              <div class="db-stat-lbl">전체 연락처</div>
+            </div>
+            <div class="db-stat">
+              <div class="db-stat-num" id="stat-customer">—</div>
+              <div class="db-stat-lbl">고객</div>
+            </div>
+            <div class="db-stat">
+              <div class="db-stat-num" id="stat-partner">—</div>
+              <div class="db-stat-lbl">협력사</div>
+            </div>
+            <div class="db-stat">
+              <div class="db-stat-num" id="stat-vip">—</div>
+              <div class="db-stat-lbl">VIP</div>
+            </div>
+          </div>
+
+          <!-- 검색·필터 툴바 -->
+          <div class="db-toolbar">
+            <input class="field-inp" id="db-search" placeholder="회사명·담당자·이메일 검색..." style="flex:1;min-width:160px;"
+              onkeydown="if(event.key==='Enter')doDbSearch()">
+            <select class="sel" id="db-cat" style="width:120px;">
+              <option value="">전체 분류</option>
+              <option value="고객">고객</option>
+              <option value="협력사">협력사</option>
+              <option value="VIP">VIP</option>
+              <option value="기타">기타</option>
+            </select>
+            <select class="sel" id="db-ind" style="width:140px;">
+              <option value="">전체 업종</option>
+              <option value="식품제조업">식품제조업</option>
+              <option value="금속가공업">금속가공업</option>
+              <option value="소비재 제조업">소비재 제조업</option>
+              <option value="기타">기타</option>
+            </select>
+            <button class="gen-btn" style="width:72px;" onclick="loadDb()">조회</button>
+            <button class="gen-btn" style="width:72px;" onclick="doDbSearch()">검색</button>
+          </div>
+
+          <!-- 결과 테이블 -->
+          <div id="db-table-area">
+            <div class="db-empty">조회 버튼을 눌러 연락처를 불러오세요</div>
+          </div>
+
+          <!-- 신규 등록 -->
+          <div class="db-section" style="margin-top:6px;">
+            <div class="db-section-title">신규 연락처 등록</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <input class="field-inp" id="nc-co" placeholder="회사명">
+              <input class="field-inp" id="nc-nm" placeholder="담당자명">
+              <input class="field-inp" id="nc-em" placeholder="이메일 *">
+              <input class="field-inp" id="nc-ph" placeholder="전화번호">
+              <select class="sel" id="nc-type">
+                <option value="고객">고객</option>
+                <option value="협력사">협력사</option>
+                <option value="VIP">VIP</option>
+                <option value="기타">기타</option>
+              </select>
+              <select class="sel" id="nc-ind">
+                <option value="식품제조업">식품제조업</option>
+                <option value="금속가공업">금속가공업</option>
+                <option value="소비재 제조업">소비재 제조업</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <input class="field-inp" id="nc-memo" placeholder="메모 (선택)" style="width:100%;margin-bottom:8px;">
+            <button class="sched-gen-btn" onclick="addContact()">✦ 구글시트에 등록</button>
+            <div id="nc-result" style="margin-top:8px;font-size:12px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑧ 대량 메일 발송 -->
+      <div class="panel-view" id="panel-bulkmail">
+        <div class="pan-header">
+          <h2>BULK MAIL · 대량 메일 발송</h2>
+          <p>구글시트 DB에서 수신자를 자동으로 필터링해 발송합니다</p>
+        </div>
+        <div class="scroll-pan">
+          <div class="db-stat-row" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="db-stat">
+              <div class="db-stat-num" id="bm-preview-count">—</div>
+              <div class="db-stat-lbl">발송 대상</div>
+            </div>
+            <div class="db-stat">
+              <div class="db-stat-num" id="bm-sent-count" style="color:var(--accent2);">—</div>
+              <div class="db-stat-lbl">발송 완료</div>
+            </div>
+            <div class="db-stat">
+              <div class="db-stat-num" id="bm-fail-count" style="color:var(--danger);">—</div>
+              <div class="db-stat-lbl">발송 실패</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div>
+              <div class="field-lbl">발송 분류</div>
+              <select class="field-sel" id="bm-cat">
+                <option value="">전체 (고객+협력사)</option>
+                <option value="고객">고객만</option>
+                <option value="협력사">협력사만</option>
+                <option value="VIP">VIP만</option>
+              </select>
+            </div>
+            <div>
+              <div class="field-lbl">업종 필터</div>
+              <select class="field-sel" id="bm-ind">
+                <option value="">전체 업종</option>
+                <option value="식품제조업">식품제조업</option>
+                <option value="금속가공업">금속가공업</option>
+                <option value="소비재 제조업">소비재 제조업</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-lbl">메일 제목</div>
+          <input class="field-inp" id="bm-subject" placeholder="예) [여누솔루션] SFOW2.0 신규 기능 안내"
+            style="width:100%;margin-bottom:10px;">
+
+          <div class="field-lbl" style="margin-bottom:3px;">본문
+            <span style="color:var(--text3);font-size:10px;margin-left:6px;">{회사명} {담당자} {업종} 자동 치환됩니다</span>
+          </div>
+          <textarea class="field-ta" id="bm-body" style="min-height:160px;"
+            placeholder="안녕하세요, {담당자}님&#10;&#10;{회사명}의 스마트제조 도입을 돕기 위해 연락드립니다.&#10;&#10;여누솔루션 황순주 드림"></textarea>
+
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="gen-btn" style="flex:1;" onclick="bmPreview()">👁 수신자 미리보기</button>
+            <button class="gen-btn" style="flex:1;" onclick="bmAiDraft()">✦ AI 본문 초안 생성</button>
+          </div>
+          <button class="sched-gen-btn" style="margin-top:8px;" onclick="bmSend()">📬 발송 실행</button>
+
+          <!-- 수신자 미리보기 -->
+          <div id="bm-preview" style="display:none;margin-top:12px;" class="db-section">
+            <div class="db-section-title">수신자 목록</div>
+            <div id="bm-preview-list"></div>
+          </div>
+
+          <!-- 발송 결과 -->
+          <div id="bm-result" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- ⑨ 문의 관리 -->
+      <div class="panel-view" id="panel-inquiry">
+        <div class="pan-header">
+          <h2>INQUIRY · 문의 관리</h2>
+          <p>접수된 문의를 확인하고 처리 상태를 업데이트합니다</p>
+        </div>
+        <div class="scroll-pan">
+          <div class="db-toolbar">
+            <select class="sel" id="inq-status-filter" style="width:120px;">
+              <option value="">전체</option>
+              <option value="접수">접수</option>
+              <option value="처리중">처리중</option>
+              <option value="처리완료">처리완료</option>
+            </select>
+            <button class="gen-btn" style="width:72px;" onclick="loadInquiries()">조회</button>
+          </div>
+          <div id="inq-list">
+            <div class="db-empty">조회 버튼을 눌러 문의 목록을 불러오세요</div>
+          </div>
+
+          <!-- 문의 직접 등록 -->
+          <div class="db-section" style="margin-top:6px;">
+            <div class="db-section-title">문의 직접 등록</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <input class="field-inp" id="inq-nm" placeholder="문의자명">
+              <input class="field-inp" id="inq-em" placeholder="이메일">
+              <select class="sel" id="inq-type">
+                <option>도입 문의</option>
+                <option>견적 요청</option>
+                <option>지원사업 문의</option>
+                <option>기술 지원</option>
+                <option>기타</option>
+              </select>
+            </div>
+            <textarea class="field-ta" id="inq-content" placeholder="문의 내용을 입력하세요..."
+              style="margin-bottom:8px;"></textarea>
+            <button class="sched-gen-btn" onclick="saveInquiry()">✦ 구글시트에 저장</button>
+            <div id="inq-save-result" style="margin-top:8px;font-size:12px;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+  <!-- ═══ API 키 설정 모달 ═══ -->
+  <div id="api-modal" style="
+  display:none;position:fixed;inset:0;z-index:999;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+">
+    <div style="
+    background:#0D1420;border:1px solid rgba(123,97,255,.4);
+    border-radius:16px;padding:28px;width:90%;max-width:460px;
+  ">
+      <div
+        style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:.15em;color:var(--accent3);margin-bottom:8px;">
+        API KEY SETTINGS</div>
+      <div style="font-size:16px;font-weight:500;margin-bottom:6px;">Anthropic API 키 설정</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:18px;">
+        AI 대화 기능(채팅, 마케팅 생성, CS 응대 등)을 사용하려면<br>
+        Anthropic API 키가 필요합니다.<br>
+        <a href="https://console.anthropic.com" target="_blank"
+          style="color:var(--accent3);">console.anthropic.com</a>에서 발급받을 수 있습니다.
+      </div>
+
+      <div
+        style="font-size:11px;color:var(--text2);margin-bottom:5px;font-family:'Rajdhani',sans-serif;letter-spacing:.06em;text-transform:uppercase;">
+        API 키 입력</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." class="field-inp"
+          style="flex:1;font-size:13px;letter-spacing:.03em;">
+        <button onclick="toggleApiKeyVisibility()" id="api-eye-btn" style="
+        background:none;border:1px solid var(--border2);border-radius:8px;
+        color:var(--text2);padding:0 12px;cursor:pointer;font-size:13px;flex-shrink:0;
+      ">👁</button>
+      </div>
+
+      <div
+        style="background:rgba(255,184,0,.07);border:1px solid rgba(255,184,0,.2);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:11px;color:var(--warn);line-height:1.7;">
+        ⚠ 보안 주의: API 키는 브라우저 로컬스토리지에 저장됩니다.<br>
+        본인 PC에서만 사용하고 타인과 공유하지 마세요.
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <button onclick="saveApiKey()" style="
+        flex:1;background:linear-gradient(90deg,rgba(123,97,255,.2),rgba(0,180,255,.1));
+        border:1px solid var(--accent3);border-radius:8px;color:var(--accent3);
+        font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;
+        padding:10px;cursor:pointer;transition:all .15s;
+      ">✓ 저장 및 연결 테스트</button>
+        <button onclick="closeApiModal()" style="
+        background:none;border:1px solid var(--border2);border-radius:8px;
+        color:var(--text2);font-family:'Noto Sans KR',sans-serif;font-size:13px;
+        padding:10px 16px;cursor:pointer;
+      ">취소</button>
+      </div>
+      <div id="api-test-msg" style="margin-top:10px;font-size:12px;text-align:center;min-height:18px;"></div>
+
+      <!-- 키 삭제 -->
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);text-align:center;">
+        <button onclick="clearApiKey()" style="
+        background:none;border:none;color:var(--text3);font-size:11px;
+        cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+      ">저장된 API 키 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    // ═══════════════════════════════
+    // SYSTEM PROMPT
+    // ═══════════════════════════════
+    const SYS = `당신은 황순주의 AI 비서(J.A.R.V.I.S)입니다.
+
+[황순주 프로필]
+소속: 여누솔루션 / 직책: 스마트제조 컨설턴트
+전문: SFOW2.0(SaaS 클라우드 스마트팩토리), IoT DAS, 소공인 디지털 전환
+
+[솔루션]
+1. SFOW2.0 - SaaS 클라우드 MES: 생산지시·실적·재고·품질 실시간 관리, 구독형 즉시 사용
+2. DAS - 설비 데이터 수집: IoT 센서로 가동시간·불량·온도 자동 수집, SFOW2.0 자동 연동
+
+[2026 소공인 스마트제조 지원사업]
+대상: 10인 미만 제조업(C10~C34) / 국비 최대 4,200만원(국비70%/자부담30%)
+핵심: 장비가 아닌 데이터 연결이 심사 기준 / SaaS 구독형 + IoT DAS 계상 가능
+
+[응대 원칙] 친절·전문적, 구체적 예시 포함, 한국어만 사용`;
+
+    // ═══════════════════════════════
+    // API 키 관리
+    // ═══════════════════════════════
+    let ANTHROPIC_API_KEY = localStorage.getItem('anthropic_api_key') || '';
+
+    function openApiSettings() {
+      const modal = document.getElementById('api-modal');
+      modal.style.display = 'flex';
+      const inp = document.getElementById('api-key-input');
+      if (ANTHROPIC_API_KEY) inp.value = ANTHROPIC_API_KEY;
+      inp.focus();
+      document.getElementById('api-test-msg').innerHTML = '';
+    }
+
+    function closeApiModal() {
+      document.getElementById('api-modal').style.display = 'none';
+    }
+
+    function toggleApiKeyVisibility() {
+      const inp = document.getElementById('api-key-input');
+      const btn = document.getElementById('api-eye-btn');
+      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+      else { inp.type = 'password'; btn.textContent = '👁'; }
+    }
+
+    async function saveApiKey() {
+      const val = document.getElementById('api-key-input').value.trim();
+      const msg = document.getElementById('api-test-msg');
+      if (!val) { msg.innerHTML = '<span style="color:var(--danger);">API 키를 입력해주세요.</span>'; return; }
+      if (!val.startsWith('sk-ant-')) {
+        msg.innerHTML = '<span style="color:var(--danger);">올바른 Anthropic API 키 형식이 아닙니다. (sk-ant-... 로 시작)</span>';
+        return;
+      }
+
+      msg.innerHTML = '<span style="color:var(--text2);">연결 테스트 중...</span>';
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': val,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-allow-browser': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 10,
+            messages: [{ role: 'user', content: 'hi' }]
+          })
+        });
+        const data = await res.json();
+
+        if (data.content && data.content.length > 0) {
+          // ✓ 성공 — 키 저장 후 UI 업데이트
+          ANTHROPIC_API_KEY = val;
+          localStorage.setItem('anthropic_api_key', val);
+          msg.innerHTML = '<span style="color:var(--accent2);">✓ 연결 성공! AI 기능을 사용할 수 있습니다.</span>';
+          updateApiSidebar();
+          updateBanner();
+          setTimeout(() => closeApiModal(), 1400);
+        } else if (data.error) {
+          // ✗ API 오류 (잘못된 키, 크레딧 부족 등)
+          const errMsg = data.error.message || data.error.type || '인증 실패';
+          msg.innerHTML = `<span style="color:var(--danger);">✗ ${errMsg}</span>`;
+        } else {
+          msg.innerHTML = '<span style="color:var(--danger);">✗ 알 수 없는 응답입니다. 키를 다시 확인해주세요.</span>';
+        }
+      } catch (e) {
+        // 네트워크 오류
+        msg.innerHTML = `<span style="color:var(--danger);">✗ 네트워크 오류: ${e.message}</span>`;
+      }
+    }
+
+    function clearApiKey() {
+      if (!confirm('저장된 API 키를 삭제할까요?')) return;
+      ANTHROPIC_API_KEY = '';
+      localStorage.removeItem('anthropic_api_key');
+      document.getElementById('api-key-input').value = '';
+      document.getElementById('api-test-msg').innerHTML = '<span style="color:var(--text2);">삭제되었습니다.</span>';
+      updateApiSidebar();
+      updateBanner();
+    }
+
+    function updateApiSidebar() {
+      const el = document.getElementById('api-status-sidebar');
+      if (!el) return;
+      if (ANTHROPIC_API_KEY) {
+        const short = ANTHROPIC_API_KEY.substring(0, 12) + '…';
+        el.innerHTML = `<span style="color:var(--accent2);">● 연결됨</span> <span style="color:var(--text3);font-size:10px;">${short}</span>`;
+      } else {
+        el.innerHTML = '<span style="color:var(--danger);">● 미설정 — AI 기능 사용 불가</span>';
+      }
+    }
+
+    function updateBanner() {
+      const banner = document.getElementById('api-key-banner');
+      if (!banner) return;
+      banner.style.display = ANTHROPIC_API_KEY ? 'none' : 'flex';
+    }
+
+    // ESC로 모달 닫기
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeApiModal();
+    });
+
+    // ═══════════════════════════════
+    // API 호출
+    // ═══════════════════════════════
+    const history = [];
+
+    async function callAI(msg, sysOverride) {
+      if (!ANTHROPIC_API_KEY) {
+        openApiSettings();
+        throw new Error('API 키를 먼저 설정해주세요.');
+      }
+      const sys = sysOverride || SYS;
+      const msgs = sysOverride
+        ? [{ role: 'user', content: msg }]
+        : [...history, { role: 'user', content: msg }];
+      if (!sysOverride) history.push({ role: 'user', content: msg });
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-allow-browser': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1000,
+          system: sys,
+          messages: msgs
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        // 크레딧 부족이나 키 오류면 설정 모달 오픈
+        if (data.error.type === 'authentication_error' || res.status === 401) {
+          ANTHROPIC_API_KEY = '';
+          localStorage.removeItem('anthropic_api_key');
+          updateApiSidebar();
+          updateBanner();
+          openApiSettings();
+        }
+        throw new Error(data.error.message || 'API 오류가 발생했습니다.');
+      }
+
+      const reply = data.content?.[0]?.text || '응답을 받지 못했습니다.';
+      if (!sysOverride) history.push({ role: 'assistant', content: reply });
+      return reply;
+    }
+
+    // ═══════════════════════════════
+    // CHAT UI
+    // ═══════════════════════════════
+    function addMsg(text, role) {
+      const area = document.getElementById('chatMsgs');
+      const row = document.createElement('div');
+      row.className = 'msg-row ' + role;
+      const av = document.createElement('div');
+      av.className = 'msg-av ' + (role === 'ai' ? 'ai' : 'me');
+      av.textContent = role === 'ai' ? '황' : '나';
+      const bub = document.createElement('div');
+      bub.className = 'bubble ' + role;
+      bub.textContent = text;
+      row.appendChild(av);
+      row.appendChild(bub);
+      area.appendChild(row);
+      area.scrollTop = area.scrollHeight;
+    }
+
+    function showTyping() {
+      const area = document.getElementById('chatMsgs');
+      const row = document.createElement('div');
+      row.id = 'typingRow'; row.className = 'msg-row ai';
+      const av = document.createElement('div');
+      av.className = 'msg-av ai'; av.textContent = '황';
+      const bub = document.createElement('div');
+      bub.className = 'bubble ai';
+      bub.innerHTML = '<div class="typing-dots"><div class="td"></div><div class="td"></div><div class="td"></div></div>';
+      row.appendChild(av); row.appendChild(bub);
+      area.appendChild(row);
+      area.scrollTop = area.scrollHeight;
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('typingRow');
+      if (el) el.remove();
+    }
+
+    async function sendChat() {
+      const inp = document.getElementById('chatInput');
+      const btn = document.getElementById('sendBtn');
+      const text = inp.value.trim();
+      if (!text) return;
+      inp.value = '';
+      inp.style.height = 'auto';
+      btn.disabled = true;
+      addMsg(text, 'user');
+      showTyping();
+      try {
+        const reply = await callAI(text);
+        removeTyping();
+        addMsg(reply, 'ai');
+        speakTTS(reply);
+      } catch (e) {
+        removeTyping();
+        const errText = e.message.includes('API 키') ? e.message
+          : '오류: ' + e.message + '\n\n사이드바 하단 🔑 API 키 설정을 확인해주세요.';
+        addMsg(errText, 'ai');
+      }
+      btn.disabled = false;
+      inp.focus();
+    }
+
+    function qs(t) {
+      document.getElementById('chatInput').value = t;
+      sendChat();
+    }
+
+    function onKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+    }
+
+    function resize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    }
+
+    // ═══════════════════════════════
+    // STT — 음성 입력
+    // ═══════════════════════════════
+    let recog = null;
+    let sttActive = false;
+
+    function buildRecog() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return null;
+      const r = new SR();
+      r.lang = 'ko-KR';
+      r.continuous = false;
+      r.interimResults = true;
+
+      r.onstart = function () {
+        sttActive = true;
+        document.getElementById('micBtn').classList.add('recording');
+        document.getElementById('voiceBar').style.display = 'flex';
+        document.getElementById('voiceTxt').textContent = '듣고 있습니다...';
+      };
+
+      r.onresult = function (e) {
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) final += e.results[i][0].transcript;
+          else interim += e.results[i][0].transcript;
+        }
+        const inp = document.getElementById('chatInput');
+        inp.value = final || interim;
+        resize(inp);
+        if (interim) document.getElementById('voiceTxt').textContent = '"' + interim + '"';
+        if (final) stopSTT();
+      };
+
+      r.onerror = function (e) {
+        stopSTT();
+        if (e.error === 'not-allowed') {
+          alert('마이크 권한을 허용해주세요.\n브라우저 주소창 왼쪽 자물쇠 아이콘에서 마이크를 허용하세요.');
+        }
+      };
+
+      r.onend = function () { stopSTT(); };
+      return r;
+    }
+
+    function toggleSTT() {
+      if (sttActive) { stopSTT(); return; }
+      if (!recog) recog = buildRecog();
+      if (!recog) {
+        alert('이 브라우저는 음성 입력을 지원하지 않습니다.\nChrome 또는 Edge 브라우저를 사용해주세요.');
+        return;
+      }
+      try { recog.start(); }
+      catch (e) { stopSTT(); }
+    }
+
+    function stopSTT() {
+      sttActive = false;
+      document.getElementById('micBtn').classList.remove('recording');
+      document.getElementById('voiceBar').style.display = 'none';
+      try { if (recog) recog.stop(); } catch (e) { }
+    }
+
+    // ═══════════════════════════════
+    // TTS — 음성 응답
+    // ═══════════════════════════════
+    let ttsOn = false;
+
+    function toggleTTS() {
+      ttsOn = !ttsOn;
+      document.getElementById('ttsBtn').classList.toggle('on', ttsOn);
+      if (!ttsOn) stopTTS();
+    }
+
+    function speakTTS(text) {
+      if (!ttsOn) return;
+      if (!('speechSynthesis' in window)) return;
+      stopTTS();
+
+      // 텍스트 정제 (마크다운 기호 제거, 500자 제한)
+      const clean = text.replace(/[*#_`~>]/g, '').replace(/\n+/g, ' ').trim().substring(0, 500);
+      const utt = new SpeechSynthesisUtterance(clean);
+      utt.lang = 'ko-KR';
+      utt.rate = 1.0;
+      utt.pitch = 1.0;
+      utt.volume = 1.0;
+
+      // 한국어 음성 선택
+      function trySpeak() {
+        const voices = speechSynthesis.getVoices();
+        const ko = voices.find(v => v.lang === 'ko-KR') || voices.find(v => v.lang.startsWith('ko'));
+        if (ko) utt.voice = ko;
+        utt.onstart = () => { document.getElementById('ttsBar').style.display = 'flex'; };
+        utt.onend = () => { document.getElementById('ttsBar').style.display = 'none'; };
+        utt.onerror = () => { document.getElementById('ttsBar').style.display = 'none'; };
+        speechSynthesis.speak(utt);
+      }
+
+      // 음성 목록 로딩 대기 (Chrome 필요)
+      if (speechSynthesis.getVoices().length > 0) {
+        trySpeak();
+      } else {
+        speechSynthesis.onvoiceschanged = trySpeak;
+      }
+    }
+
+    function stopTTS() {
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      document.getElementById('ttsBar').style.display = 'none';
+    }
+
+    // ═══════════════════════════════
+    // NAV
+    // ═══════════════════════════════
+    function nav(id, el) {
+      document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + id).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // ═══════════════════════════════
+    // MARKETING
+    // ═══════════════════════════════
+    async function genMkt(type) {
+      const sec = document.getElementById('mkt-res');
+      const body = document.getElementById('mkt-res-body');
+      const title = document.getElementById('mkt-res-title');
+      sec.style.display = 'block';
+      body.className = 'res-body generating';
+      body.innerHTML = '<div class="spinner"></div>AI가 콘텐츠를 생성 중입니다...';
+
+      let prompt = '', label = '';
+      if (type === 'sns') {
+        const ch = document.getElementById('sns-ch').value;
+        const tp = document.getElementById('sns-tp').value;
+        label = 'SNS 포스팅 · ' + ch;
+        prompt = `여누솔루션 황순주의 ${ch}용 SNS 포스팅 작성. 주제: ${tp}. 해시태그 포함, SFOW2.0·DAS 홍보, 2026 소공인 지원사업 언급.`;
+      } else if (type === 'email') {
+        const tp = document.getElementById('em-tp').value;
+        const ind = document.getElementById('em-ind').value;
+        label = '이메일 콘텐츠 · ' + tp;
+        prompt = `여누솔루션 황순주의 이메일 마케팅 작성. 유형: ${tp}, 대상: ${ind}. 제목·본문 포함, SFOW2.0·DAS 홍보, 2026 지원사업(국비 최대 4,200만원) 안내 포함.`;
+      } else if (type === 'blog') {
+        const tp = document.getElementById('bl-tp').value;
+        const tpc = document.getElementById('bl-tpc').value;
+        label = tp + ' · ' + tpc;
+        prompt = `여누솔루션 황순주 명의 ${tp} 작성. 주제: ${tpc}. 전문적, SEO 키워드 포함, SFOW2.0·DAS 자연스럽게 홍보. 제목 포함, 400~500자.`;
+      } else {
+        const tp = document.getElementById('pr-tp').value;
+        const ind = document.getElementById('pr-ind').value;
+        label = tp + ' · ' + ind;
+        prompt = `여누솔루션 황순주의 ${ind} 대상 ${tp} 작성. SFOW2.0·DAS 소개, 2026 소공인 지원사업(국비 최대 4,200만원) 활용 안내 포함. 전문적·설득력 있게.`;
+      }
+
+      title.textContent = label;
+      const sys = `당신은 여누솔루션 황순주의 마케팅 콘텐츠 작성 AI입니다. SFOW2.0(SaaS 클라우드 스마트팩토리)과 IoT DAS를 홍보합니다. 한국어로 작성하세요.`;
+
+      try {
+        const reply = await callAI(prompt, sys);
+        body.className = 'res-body';
+        body.textContent = reply;
+      } catch (e) {
+        body.className = 'res-body';
+        body.textContent = '생성 중 오류가 발생했습니다.';
+      }
+    }
+
+    // ═══════════════════════════════
+    // CS
+    // ═══════════════════════════════
+    async function genCS(scenario) {
+      const sec = document.getElementById('cs-res');
+      const body = document.getElementById('cs-res-body');
+      document.getElementById('cs-res-title').textContent = scenario;
+      sec.style.display = 'block';
+      body.className = 'res-body generating';
+      body.innerHTML = '<div class="spinner"></div>CS 메시지 생성 중...';
+
+      const sys = `당신은 여누솔루션 황순주의 CS 응대 메시지 작성 AI입니다. 친절·전문적 톤. SFOW2.0·DAS 솔루션, 2026 소공인 지원사업 자연스럽게 포함. 한국어로 작성.`;
+      const prompt = `CS 상황: ${scenario}. 발신: 황순주(여누솔루션). 이메일 또는 메시지 형식으로 작성.`;
+
+      try {
+        const reply = await callAI(prompt, sys);
+        body.className = 'res-body';
+        body.textContent = reply;
+      } catch (e) {
+        body.className = 'res-body';
+        body.textContent = '생성 중 오류가 발생했습니다.';
+      }
+    }
+
+    // ═══════════════════════════════
+    // SCHEDULE
+    // ═══════════════════════════════
+    async function genSched() {
+      const co = document.getElementById('sc-co').value || '고객사';
+      const nm = document.getElementById('sc-nm').value || '담당자';
+      const mt = document.getElementById('sc-mt').value;
+      const ch = document.getElementById('sc-ch').value;
+      const dt = document.getElementById('sc-dt').value;
+      const note = document.getElementById('sc-note').value;
+
+      const sec = document.getElementById('sc-res');
+      const body = document.getElementById('sc-res-body');
+      document.getElementById('sc-res-title').textContent = mt + ' · ' + ch;
+      sec.style.display = 'block';
+      body.className = 'res-body generating';
+      body.innerHTML = '<div class="spinner"></div>미팅 메시지 생성 중...';
+
+      const sys = `당신은 여누솔루션 황순주의 일정 관리 AI입니다. 고객에게 보내는 미팅 안내 메시지를 채널에 맞게 작성합니다. 발신인: 황순주(여누솔루션). 한국어, 전문적이고 친근한 톤.`;
+      const prompt = `${co} ${nm}님에게 보낼 ${ch}용 ${mt} 안내 메시지 작성.${dt ? ' 일시/장소: ' + dt : ''}${note ? ' 특이사항: ' + note : ''} SFOW2.0·DAS 관련 미팅임을 자연스럽게 포함.`;
+
+      try {
+        const reply = await callAI(prompt, sys);
+        body.className = 'res-body';
+        body.textContent = reply;
+      } catch (e) {
+        body.className = 'res-body';
+        body.textContent = '생성 중 오류가 발생했습니다.';
+      }
+    }
+
+    // ═══════════════════════════════
+    // EMAIL PROMO
+    // ═══════════════════════════════
+    let epSubject = '';
+
+    function selTone(el) {
+      document.querySelectorAll('#ep-tones .ep-tag').forEach(t => t.classList.remove('on'));
+      el.classList.add('on');
+    }
+
+    function epTab(tab, btn) {
+      document.querySelectorAll('.ep-tab').forEach(t => t.classList.remove('on'));
+      btn.classList.add('on');
+      const txt = document.getElementById('ep-body-txt');
+      const html = document.getElementById('ep-body-html');
+      const subj = document.getElementById('ep-subj');
+      if (tab === 'txt') { txt.style.display = 'block'; html.style.display = 'none'; subj.style.display = 'flex'; }
+      else { txt.style.display = 'none'; html.style.display = 'block'; subj.style.display = 'none'; }
+    }
+
+    async function genEmail() {
+      const pur = document.getElementById('ep-pur').value;
+      const ind = document.getElementById('ep-ind').value;
+      const nm = document.getElementById('ep-nm').value || '담당자';
+      const co = document.getElementById('ep-co').value || '';
+      const tags = [...document.querySelectorAll('#ep-tags .ep-tag.on')].map(t => t.textContent);
+      const tone = document.querySelector('#ep-tones .ep-tag.on')?.dataset?.tone || '전문적이고 신뢰감 있는';
+
+      const btn = document.getElementById('ep-gen-btn');
+      const prev = document.getElementById('ep-prev');
+      const txtView = document.getElementById('ep-body-txt');
+      const htmlView = document.getElementById('ep-body-html');
+      const subj = document.getElementById('ep-subj');
+      const subjVal = document.getElementById('ep-subj-val');
+
+      btn.disabled = true;
+      btn.textContent = '⟳ 생성 중...';
+      prev.style.display = 'block';
+      subj.style.display = 'none';
+      txtView.style.display = 'block';
+      htmlView.style.display = 'none';
+      txtView.className = 'res-body generating';
+      txtView.innerHTML = '<div class="spinner"></div>이메일을 작성 중입니다...';
+
+      const sys = `당신은 여누솔루션 황순주의 이메일 마케팅 전문가 AI입니다.
+SFOW2.0(SaaS 클라우드 스마트팩토리)과 IoT DAS를 홍보합니다.
+2026 소공인 스마트제조 지원사업(국비 최대 4,200만원, 국비70%/자부담30%)과 연계.
+반드시 JSON만 응답하세요(코드블록, 설명 없이):
+{"subject":"이메일 제목","body":"본문 전체(인사말~서명)","html":"<div style='font-family:Arial,sans-serif;max-width:580px;color:#1a1a2e;'>HTML 버전</div>"}`;
+
+      const prompt = `조건:
+- 발송 목적: ${pur}
+- 대상 업종: ${ind}
+- 수신자: ${co ? co + ' ' : ''}${nm}
+- 강조 키워드: ${tags.join(', ')}
+- 톤: ${tone}
+- 발신인: 황순주 (여누솔루션 스마트제조 컨설턴트)
+- 서명에 "여누솔루션 | 스마트제조 전문" 포함`;
+
+      try {
+        const raw = await callAI(prompt, sys);
+        let parsed;
+        try {
+          const clean = raw.replace(/```json|```/g, '').trim();
+          parsed = JSON.parse(clean);
+        } catch {
+          parsed = { subject: '홍보 이메일', body: raw, html: '<div style="font-family:Arial,sans-serif;">' + raw.replace(/\n/g, '<br>') + '</div>' };
+        }
+        epSubject = parsed.subject || '';
+        subjVal.textContent = epSubject;
+        subj.style.display = 'flex';
+        txtView.className = 'ep-mail-body';
+        txtView.textContent = parsed.body || raw;
+        htmlView.innerHTML = parsed.html || '';
+      } catch (e) {
+        txtView.className = 'ep-mail-body';
+        txtView.textContent = '생성 중 오류가 발생했습니다.';
+      }
+
+      btn.disabled = false;
+      btn.textContent = '✦ 홍보 이메일 생성';
+    }
+
+    function cpSubj() {
+      if (!epSubject) return;
+      navigator.clipboard.writeText(epSubject).then(() => {
+        const btn = document.getElementById('ep-subj-copy');
+        btn.textContent = '복사됨!';
+        setTimeout(() => { btn.textContent = '제목만 복사'; }, 1500);
+      });
+    }
+
+    // ═══════════════════════════════════════════════
+    // GOOGLE SHEETS DB 연동
+    // ═══════════════════════════════════════════════
+    let GAS_URL = localStorage.getItem('gas_url') || '';
+
+    function saveGasUrl() {
+      const val = document.getElementById('gas-url-input').value.trim();
+      if (!val) { alert('URL을 입력해주세요.'); return; }
+      if (!val.startsWith('https://script.google.com')) {
+        alert('올바른 Apps Script 웹 앱 URL을 입력해주세요.\n형식: https://script.google.com/macros/s/…/exec');
+        return;
+      }
+      if (!val.endsWith('/exec')) {
+        alert('URL이 /exec 로 끝나야 합니다.\n배포 관리에서 웹 앱 URL을 다시 복사해주세요.');
+        return;
+      }
+      GAS_URL = val;
+      localStorage.setItem('gas_url', val);
+      const msg = document.getElementById('gas-save-msg');
+      msg.innerHTML = '<span style="color:var(--text2);">연결 테스트 중...</span>';
+      updateGasSidebar();
+
+      // ping으로 실제 연결 확인
+      gasGet({ action: 'ping' }).then(res => {
+        if (res.success) {
+          msg.innerHTML = '<span style="color:var(--accent2);">✓ 연결 성공! 구글시트 DB가 연결되었습니다.</span>';
+          setTimeout(() => { msg.innerHTML = ''; loadDb(); }, 1500);
+        } else {
+          msg.innerHTML = `<span style="color:var(--danger);">✗ 오류: ${res.error || '알 수 없는 오류'}</span>`;
+        }
+      }).catch(e => {
+        msg.innerHTML = `<span style="color:var(--danger);">✗ ${e.message}</span>`;
+      });
+    }
+
+    function clearGasUrl() {
+      if (!confirm('연동 URL을 초기화하시겠습니까?')) return;
+      GAS_URL = '';
+      localStorage.removeItem('gas_url');
+      document.getElementById('gas-url-input').value = '';
+      const msg = document.getElementById('gas-save-msg');
+      msg.innerHTML = '<span style="color:var(--text2);">초기화되었습니다. 새 URL을 입력해주세요.</span>';
+      updateGasSidebar();
+      document.getElementById('db-table-area').innerHTML = '<div class="db-empty">URL을 설정 후 조회하세요</div>';
+      ['stat-total', 'stat-customer', 'stat-partner', 'stat-vip'].forEach(id => {
+        document.getElementById(id).textContent = '—';
+      });
+    }
+
+    function openGasSettings() {
+      // DB 패널로 이동하고 설정 박스 펼치기
+      const dbNav = document.querySelector('.nav-item[onclick*="nav(\'db\'"]');
+      if (dbNav) dbNav.click();
+      // 박스 펼치기
+      const body = document.getElementById('gas-box-body');
+      const btn = document.getElementById('gas-toggle-btn');
+      if (body && body.style.display === 'none') {
+        body.style.display = 'block';
+        if (btn) btn.textContent = '접기';
+      }
+      // 입력창에 현재 URL 표시
+      const inp = document.getElementById('gas-url-input');
+      if (inp && GAS_URL) inp.value = GAS_URL;
+    }
+
+    function toggleGasBox() {
+      const body = document.getElementById('gas-box-body');
+      const btn = document.getElementById('gas-toggle-btn');
+      if (!body) return;
+      const isHidden = body.style.display === 'none';
+      body.style.display = isHidden ? 'block' : 'none';
+      if (btn) btn.textContent = isHidden ? '접기' : '펼치기';
+    }
+
+    function updateGasSidebar() {
+      const el = document.getElementById('gas-status-sidebar');
+      if (!el) return;
+      if (GAS_URL) {
+        const short = GAS_URL.replace('https://script.google.com/macros/s/', '').substring(0, 18) + '…';
+        el.innerHTML = `<span style="color:var(--accent2);">● 연결됨</span> <span style="color:var(--text3);font-size:10px;">${short}</span>`;
+      } else {
+        el.innerHTML = '<span style="color:var(--danger);">● 미연결 — URL 설정 필요</span>';
+      }
+    }
+
+    function checkGasUrl() {
+      if (!GAS_URL) {
+        // 사이드바 설정 버튼으로 안내
+        const goSet = confirm('Apps Script 웹 앱 URL이 설정되지 않았습니다.\n\n지금 설정하러 이동할까요?');
+        if (goSet) openGasSettings();
+        return false;
+      }
+      return true;
+    }
+
+    // ─────────────────────────────────────────────
+    // GAS 통신 (JSONP로 CORS 완전 우회)
+    // ─────────────────────────────────────────────
+    function gasGet(params) {
+      return new Promise(function (resolve, reject) {
+        // 고유 콜백명 생성
+        var cbName = 'jarvis_cb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+        var timeout;
+
+        // 전역 콜백 등록
+        window[cbName] = function (data) {
+          clearTimeout(timeout);
+          delete window[cbName];
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+          resolve(data);
+        };
+
+        // 타임아웃 10초
+        timeout = setTimeout(function () {
+          delete window[cbName];
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+          reject(new Error('응답 시간 초과(10초). Apps Script 배포 설정을 확인해주세요.\n① 액세스: 모든 사용자 ② URL이 /exec로 끝나는지 ③ 재배포 여부'));
+        }, 10000);
+
+        // JSONP 스크립트 태그 삽입
+        params.callback = cbName;
+        var qs = Object.keys(params).map(function (k) {
+          return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+        }).join('&');
+
+        var script = document.createElement('script');
+        script.src = GAS_URL + '?' + qs;
+        script.onerror = function () {
+          clearTimeout(timeout);
+          delete window[cbName];
+          reject(new Error('스크립트 로드 실패. URL이 올바른지 확인해주세요.'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    async function gasPost(body) {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body)
+      });
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error('응답 파싱 오류: ' + text.substring(0, 120));
+      }
+    }
+
+    // ── DB 초기화 ──
+    function initDbPanel() {
+      const stored = localStorage.getItem('gas_url');
+      if (stored) {
+        GAS_URL = stored;
+        const inp = document.getElementById('gas-url-input');
+        if (inp) inp.value = stored;
+      }
+      updateGasSidebar();
+    }
+
+    // ── 연락처 조회 ──
+    async function loadDb() {
+      if (!checkGasUrl()) return;
+      const cat = document.getElementById('db-cat').value;
+      const ind = document.getElementById('db-ind').value;
+      renderDbLoading('db-table-area');
+      try {
+        const res = await gasGet({ action: 'getContacts', category: cat, industry: ind });
+        if (res.success) {
+          updateDbStats(res.data);
+          renderDbTable(res.data);
+        } else {
+          renderDbError('db-table-area', res.error, true);
+        }
+      } catch (e) {
+        renderDbError('db-table-area', e.message, true);
+      }
+    }
+
+    // ── 연락처 검색 ──
+    async function doDbSearch() {
+      if (!checkGasUrl()) return;
+      const kw = document.getElementById('db-search').value.trim();
+      if (!kw) { loadDb(); return; }
+      renderDbLoading('db-table-area');
+      try {
+        const res = await gasGet({ action: 'searchContact', keyword: kw });
+        if (res.success) renderDbTable(res.data);
+        else renderDbError('db-table-area', res.error);
+      } catch (e) {
+        renderDbError('db-table-area', '연결 오류: ' + e.message);
+      }
+    }
+
+    // ── 통계 업데이트 ──
+    function updateDbStats(data) {
+      document.getElementById('stat-total').textContent = data.length;
+      document.getElementById('stat-customer').textContent = data.filter(d => d.category === '고객').length;
+      document.getElementById('stat-partner').textContent = data.filter(d => d.category === '협력사').length;
+      document.getElementById('stat-vip').textContent = data.filter(d => d.category === 'VIP').length;
+    }
+
+    // ── 테이블 렌더링 ──
+    function renderDbTable(data) {
+      const el = document.getElementById('db-table-area');
+      if (!data || data.length === 0) {
+        el.innerHTML = '<div class="db-empty">검색 결과가 없습니다.</div>';
+        return;
+      }
+      let html = `<div style="font-size:11px;color:var(--text2);margin-bottom:6px;">${data.length}건</div>
+  <div class="db-table-wrap"><table class="db-table">
+  <tr>
+    <th>분류</th><th>회사명</th><th>담당자</th>
+    <th>이메일</th><th>전화</th><th>업종</th><th>등록일</th>
+  </tr>`;
+      data.forEach(c => {
+        const badgeCls = c.category === '고객' ? 'badge-customer'
+          : c.category === '협력사' ? 'badge-partner'
+            : c.category === 'VIP' ? 'badge-vip' : 'badge-etc';
+        html += `<tr>
+      <td><span class="db-badge ${badgeCls}">${c.category || c.type}</span></td>
+      <td style="font-weight:500;">${c.company}</td>
+      <td>${c.contact}</td>
+      <td style="color:var(--accent2);">${c.email}</td>
+      <td style="color:var(--text2);">${c.phone}</td>
+      <td>${c.industry}</td>
+      <td style="color:var(--text3);white-space:nowrap;">${c.createdAt}</td>
+    </tr>`;
+      });
+      html += '</table></div>';
+      el.innerHTML = html;
+    }
+
+    // ── 신규 등록 ──
+    async function addContact() {
+      if (!checkGasUrl()) return;
+      const email = document.getElementById('nc-em').value.trim();
+      if (!email) { alert('이메일은 필수입니다.'); return; }
+      const data = {
+        company: document.getElementById('nc-co').value,
+        contact: document.getElementById('nc-nm').value,
+        email,
+        phone: document.getElementById('nc-ph').value,
+        type: document.getElementById('nc-type').value,
+        category: document.getElementById('nc-type').value,
+        industry: document.getElementById('nc-ind').value,
+        memo: document.getElementById('nc-memo').value
+      };
+      const el = document.getElementById('nc-result');
+      el.innerHTML = '<span style="color:var(--text2);">저장 중...</span>';
+      try {
+        const res = await gasPost({ action: 'addContact', data });
+        if (res.success) {
+          el.innerHTML = `<span style="color:var(--accent2);">✓ ${res.message}</span>`;
+          ['nc-co', 'nc-nm', 'nc-em', 'nc-ph', 'nc-memo'].forEach(id => document.getElementById(id).value = '');
+          loadDb();
+        } else {
+          el.innerHTML = `<span style="color:var(--danger);">✗ ${res.error}</span>`;
+        }
+      } catch (e) {
+        el.innerHTML = `<span style="color:var(--danger);">연결 오류: ${e.message}</span>`;
+      }
+    }
+
+    // ── 대량 메일 수신자 미리보기 ──
+    async function bmPreview() {
+      if (!checkGasUrl()) return;
+      const cat = document.getElementById('bm-cat').value;
+      const ind = document.getElementById('bm-ind').value;
+      const prev = document.getElementById('bm-preview');
+      const list = document.getElementById('bm-preview-list');
+      prev.style.display = 'block';
+      list.innerHTML = '<div style="font-size:12px;color:var(--text2);">불러오는 중...</div>';
+      try {
+        const res = await gasGet({ action: 'getContacts', category: cat, industry: ind });
+        document.getElementById('bm-preview-count').textContent = res.success ? res.count : '—';
+        if (!res.success || res.count === 0) {
+          list.innerHTML = '<div class="db-empty">해당 조건의 수신자가 없습니다.</div>';
+          return;
+        }
+        let html = '';
+        res.data.slice(0, 10).forEach(c => {
+          const bc = c.category === '고객' ? 'badge-customer' : c.category === 'VIP' ? 'badge-vip' : 'badge-partner';
+          html += `<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;">
+        <span class="db-badge ${bc}">${c.category || c.type}</span>
+        <span style="font-weight:500;min-width:90px;">${c.company}</span>
+        <span style="color:var(--text2);">${c.contact}</span>
+        <span style="color:var(--accent2);margin-left:auto;">${c.email}</span>
+      </div>`;
+        });
+        if (res.count > 10) html += `<div style="font-size:11px;color:var(--text3);padding:6px 0;">… 외 ${res.count - 10}명</div>`;
+        list.innerHTML = html;
+      } catch (e) {
+        list.innerHTML = `<div style="color:var(--danger);">오류: ${e.message}</div>`;
+      }
+    }
+
+    // ── AI 본문 초안 생성 ──
+    async function bmAiDraft() {
+      const cat = document.getElementById('bm-cat').value || '전체';
+      const ind = document.getElementById('bm-ind').value || '제조업';
+      const bodyEl = document.getElementById('bm-body');
+      bodyEl.value = '초안 생성 중...';
+      const sys = `여누솔루션 황순주의 대량 이메일 본문 작성 전문가. SFOW2.0·DAS 홍보, 2026 소공인 지원사업(국비 최대 4,200만원) 포함. {담당자} {회사명} {업종} 치환 변수 사용. 한국어.`;
+      const prompt = `${cat} 대상 ${ind} 업종 홍보 이메일 본문을 작성해주세요. 인사말부터 서명까지 포함, {담당자} {회사명} {업종} 치환 변수 사용.`;
+      try {
+        const reply = await callAI(prompt, sys);
+        bodyEl.value = reply;
+      } catch (e) {
+        bodyEl.value = '초안 생성 중 오류가 발생했습니다.';
+      }
+    }
+
+    // ── 대량 메일 발송 ──
+    async function bmSend() {
+      if (!checkGasUrl()) return;
+      const subject = document.getElementById('bm-subject').value.trim();
+      const body = document.getElementById('bm-body').value.trim();
+      if (!subject || !body) { alert('제목과 본문을 모두 입력해주세요.'); return; }
+      if (!confirm('실제 이메일이 발송됩니다. 진행할까요?')) return;
+
+      const cat = document.getElementById('bm-cat').value;
+      const ind = document.getElementById('bm-ind').value;
+      const el = document.getElementById('bm-result');
+      el.innerHTML = '<div style="font-size:12px;color:var(--accent2);">발송 중... 잠시만 기다려주세요.</div>';
+
+      try {
+        const res = await gasPost({ action: 'sendBulkMail', category: cat, industry: ind, subject, body });
+        if (res.success) {
+          document.getElementById('bm-sent-count').textContent = res.sentCount;
+          document.getElementById('bm-fail-count').textContent = res.failedCount;
+          el.innerHTML = `<div style="background:rgba(0,255,212,.06);border:1px solid rgba(0,255,212,.2);border-radius:8px;padding:12px;font-size:13px;color:var(--accent2);">
+        ✓ ${res.message}
+      </div>`;
+        } else {
+          el.innerHTML = `<div style="color:var(--danger);">✗ ${res.error}</div>`;
+        }
+      } catch (e) {
+        el.innerHTML = `<div style="color:var(--danger);">연결 오류: ${e.message}</div>`;
+      }
+    }
+
+    // ── 문의 목록 조회 ──
+    async function loadInquiries() {
+      if (!checkGasUrl()) return;
+      const status = document.getElementById('inq-status-filter').value;
+      const el = document.getElementById('inq-list');
+      el.innerHTML = '<div style="font-size:12px;color:var(--text2);">조회 중...</div>';
+      try {
+        const res = await gasGet({ action: 'getInquiries', status });
+        if (!res.success) { renderDbError('inq-list', res.error); return; }
+        if (!res.data.length) { el.innerHTML = '<div class="db-empty">문의가 없습니다.</div>'; return; }
+        let html = `<div style="font-size:11px;color:var(--text2);margin-bottom:8px;">${res.count}건</div>`;
+        res.data.forEach(inq => {
+          const sc = `status-${inq.status}`;
+          html += `<div class="inq-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+          <span style="font-size:13px;font-weight:500;">${inq.name} · <span style="font-weight:400;color:var(--text2);">${inq.type}</span></span>
+          <span style="font-size:11px;" class="${sc}">${inq.status}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">${inq.date} · ${inq.email}</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.65;">${inq.content}</div>
+        ${inq.answer ? `<div style="margin-top:8px;padding:8px;background:rgba(0,180,255,.06);border-radius:6px;font-size:12px;color:var(--accent2);">답변: ${inq.answer}</div>` : ''}
+      </div>`;
+        });
+        el.innerHTML = html;
+      } catch (e) {
+        renderDbError('inq-list', '연결 오류: ' + e.message);
+      }
+    }
+
+    // ── 문의 저장 ──
+    async function saveInquiry() {
+      if (!checkGasUrl()) return;
+      const data = {
+        name: document.getElementById('inq-nm').value || '미입력',
+        email: document.getElementById('inq-em').value,
+        type: document.getElementById('inq-type').value,
+        content: document.getElementById('inq-content').value
+      };
+      if (!data.content) { alert('문의 내용을 입력해주세요.'); return; }
+      const el = document.getElementById('inq-save-result');
+      el.innerHTML = '<span style="color:var(--text2);">저장 중...</span>';
+      try {
+        const res = await gasPost({ action: 'saveInquiry', data });
+        if (res.success) {
+          el.innerHTML = `<span style="color:var(--accent2);">✓ ${res.message}</span>`;
+          ['inq-nm', 'inq-em', 'inq-content'].forEach(id => document.getElementById(id).value = '');
+        } else {
+          el.innerHTML = `<span style="color:var(--danger);">✗ ${res.error}</span>`;
+        }
+      } catch (e) {
+        el.innerHTML = `<span style="color:var(--danger);">연결 오류: ${e.message}</span>`;
+      }
+    }
+
+    // ── 공통 로딩/에러 ──
+    function renderDbLoading(id) {
+      document.getElementById(id).innerHTML = '<div style="font-size:12px;color:var(--text2);padding:12px 0;">데이터를 불러오는 중...</div>';
+    }
+
+    function renderDbError(id, msg, showDiag) {
+      const diagHtml = showDiag ? `
+    <div style="margin-top:10px;background:rgba(255,255,255,.04);border-radius:6px;padding:10px;font-size:11px;color:var(--text2);line-height:1.8;">
+      <b style="color:var(--text);">체크리스트</b><br>
+      ① Apps Script 배포 시 액세스: <b style="color:var(--warn);">"모든 사용자"</b> 설정 확인<br>
+      ② URL이 <code style="background:rgba(255,255,255,.08);padding:1px 4px;border-radius:3px;">/exec</code> 로 끝나는지 확인<br>
+      ③ 코드 수정 후 <b style="color:var(--warn);">새 버전으로 재배포</b> 했는지 확인<br>
+      ④ 구글시트에 시트명이 정확히 <b style="color:var(--warn);">고객DB, 협력사DB</b> 로 되어 있는지 확인<br>
+      ⑤ Apps Script 편집기에서 <b style="color:var(--warn);">직접 실행 테스트</b> 후 권한 허용 여부 확인
+      <div style="margin-top:8px;">
+        <button onclick="testGasConnection()" style="background:rgba(0,180,255,.12);border:1px solid var(--border2);border-radius:6px;color:var(--accent);font-size:11px;padding:4px 10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">
+          🔍 연결 재시도
+        </button>
+      </div>
+    </div>` : '';
+      document.getElementById(id).innerHTML =
+        `<div style="font-size:12px;color:var(--danger);padding:8px 0;">⚠ ${msg || '오류가 발생했습니다.'}${diagHtml}</div>`;
+    }
+
+    async function testGasConnection() {
+      if (!checkGasUrl()) return;
+      renderDbLoading('db-table-area');
+      try {
+        const res = await gasGet({ action: 'getContacts', category: '', industry: '' });
+        if (res.success) {
+          updateDbStats(res.data);
+          renderDbTable(res.data);
+        } else {
+          renderDbError('db-table-area', res.error, true);
+        }
+      } catch (e) {
+        renderDbError('db-table-area', e.message, true);
+      }
+    }
+
+    // ═══════════════════════════════
+    // FAQ
+    // ═══════════════════════════════
+    const faqs = [
+      { q: 'SFOW2.0이 무엇인가요?', a: 'SFOW2.0은 여누솔루션이 제공하는 SaaS 기반 클라우드 스마트팩토리 통합 플랫폼입니다. 생산지시·실적·재고·품질을 실시간으로 관리하고, 설비 IoT 데이터와 자동 연동되어 현장 전체를 하나의 화면에서 파악할 수 있습니다. 별도 서버 설치 없이 구독형으로 즉시 사용 가능합니다.' },
+      { q: '데이터 연동은 어떻게 이루어지나요?', a: '설비 → DAS(IoT 센서 자동 수집) → 클라우드 → SFOW2.0 대시보드 순서로 이루어집니다. 기존 설비에 센서를 부착하면 가동률·생산량·불량·온도 등이 자동 수집되어 실시간 화면에 표시되고, 별도 수기 입력 없이 MES와 자동 연동됩니다.' },
+      { q: '설치가 어렵거나 기존 시스템과 충돌하지 않나요?', a: 'SFOW2.0은 SaaS 구독형으로 별도 서버 설치 없이 인터넷 브라우저만으로 바로 사용 가능합니다. DAS 센서는 기존 설비 외부에 부착하는 방식이라 설비 가동을 멈추지 않아도 됩니다.' },
+      { q: '소규모 사업장(5~10인)도 도입 가능한가요?', a: '네, 오히려 소규모 사업장에 최적화되어 있습니다. 2026 소공인 스마트제조 지원사업은 10인 미만 제조업을 대상으로 하며, 도입 시 국비 최대 4,200만 원을 지원받을 수 있습니다.' },
+      { q: '2026 소공인 스마트제조 지원사업이란?', a: '10인 미만 제조업 대상 디지털 전환 지원사업입니다. 업체당 국비 최대 4,200만 원(국비 70% / 자부담 30%)을 지원하며, SaaS 구독형 SW와 IoT 설비 데이터 연동이 심사에서 유리합니다.' },
+      { q: '식품제조업에서 HACCP 연계가 가능한가요?', a: 'DAS로 냉장·가열 구간 온도를 자동 기록하고 기준 이탈 시 즉시 알림을 받을 수 있습니다. 종이 점검표를 태블릿 디지털 점검표로 전환해 스마트 HACCP 요건을 충족할 수 있습니다.' },
+      { q: '도입 비용은 얼마나 드나요?', a: '기업 규모·설비 수·필요 기능에 따라 달라집니다. 지원사업 활용 시 자부담은 총 도입 비용의 30%로 줄어듭니다. 정확한 견적은 현장 진단 후 제안드리며, 초기 상담은 무료입니다.' },
+      { q: '얼마나 빨리 도입할 수 있나요?', a: 'SFOW2.0은 계약 후 1~2주 내 사용 시작이 가능합니다. DAS 센서 설치는 현장 규모에 따라 1~3일 소요됩니다. 지원사업 활용 시 사업계획서 심사 기간(1~2개월)이 추가됩니다.' },
+    ];
+
+    function buildFaq() {
+      const list = document.getElementById('faqList');
+      faqs.forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'faq-item';
+        item.innerHTML = `<div class="faq-q" onclick="this.parentElement.classList.toggle('open')"><span>${f.q}</span><span class="faq-arrow">▶</span></div><div class="faq-a">${f.a}</div>`;
+        list.appendChild(item);
+      });
+    }
+
+    // ═══════════════════════════════
+    // COPY
+    // ═══════════════════════════════
+    function cp(id, btn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const text = el.textContent || el.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = '복사됨!';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+      });
+    }
+
+    // ═══════════════════════════════
+    // CLOCK
+    // ═══════════════════════════════
+    function tick() {
+      document.getElementById('clock').textContent =
+        new Date().toLocaleTimeString('ko-KR', { hour12: false });
+    }
+
+    // ═══════════════════════════════
+    // INIT
+    // ═══════════════════════════════
+    buildFaq();
+    setInterval(tick, 1000);
+    tick();
+    initDbPanel();
+    updateApiSidebar();
+    updateBanner();
+  </script>
+</body>
+
+</html>
