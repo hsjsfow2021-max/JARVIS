@@ -213,6 +213,9 @@ body::before{
 .tts-btn:hover{border-color:var(--accent2);color:var(--accent2);}
 .tts-btn.on{border-color:var(--accent2);color:var(--accent2);background:rgba(0,255,212,.08);box-shadow:0 0 8px var(--glow2);}
 
+/* 프로필 편집 hover */
+.prof-wrap:hover #profOverlay { opacity:1 !important; }
+
 /* 텍스트 입력 */
 #chatInput{
   flex:1;background:none;border:none;outline:none;
@@ -401,12 +404,29 @@ body::before{
   <!-- ── SIDEBAR ── -->
   <div class="sidebar">
     <div class="profile-sec">
-      <div class="prof-wrap">
-        <div class="prof-av">황</div>
+      <div class="prof-wrap" onclick="openProfileModal()" title="프로필 편집" style="cursor:pointer;">
+        <div class="prof-av" id="profAv">
+          <img id="profImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+          <span id="profInitial">황</span>
+        </div>
         <div class="prof-ring"></div>
+        <!-- 편집 오버레이 -->
+        <div style="
+          position:absolute;inset:0;border-radius:50%;
+          background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;
+          opacity:0;transition:opacity .2s;font-size:13px;color:#fff;
+        " id="profOverlay">✏</div>
       </div>
-      <div class="prof-name">황순주</div>
-      <div class="prof-title">여누솔루션 · 스마트제조 전문가</div>
+      <div class="prof-name" id="profName">황순주</div>
+      <div class="prof-title" id="profTitle">여누솔루션 · 스마트제조 전문가</div>
+      <button onclick="openProfileModal()" style="
+        margin-top:6px;background:none;border:1px solid var(--border2);
+        border-radius:6px;color:var(--text3);font-size:10px;padding:3px 10px;
+        cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s;
+      " onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'"
+         onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border2)'">
+        ✏ 프로필 편집
+      </button>
     </div>
 
     <div class="nav-sec">
@@ -425,9 +445,10 @@ body::before{
 
     <div class="info-pan">
       <div class="nav-lbl" style="padding:0 0 6px">연락처</div>
-      <div class="info-row"><span class="info-lbl">소속</span><span class="info-val">여누솔루션</span></div>
-      <div class="info-row"><span class="info-lbl">직책</span><span class="info-val">스마트제조 컨설턴트</span></div>
-      <div class="info-row"><span class="info-lbl">전문</span><span class="info-val">SFOW2.0 · DAS · DX</span></div>
+      <div class="info-row"><span class="info-lbl">소속</span><span class="info-val" id="infoOrg">여누솔루션</span></div>
+      <div class="info-row"><span class="info-lbl">직책</span><span class="info-val" id="infoRole">스마트제조 컨설턴트</span></div>
+      <div class="info-row"><span class="info-lbl">전문</span><span class="info-val" id="infoSpec">SFOW2.0 · DAS · DX</span></div>
+      <div class="info-row"><span class="info-lbl">전화</span><span class="info-val" id="infoPhone">010-8680-8440</span></div>
     </div>
 
     <div class="info-pan" style="border-top:1px solid var(--border);">
@@ -891,6 +912,92 @@ body::before{
 
   </div><!-- /content -->
 </div><!-- /main -->
+
+<!-- ═══ 프로필 편집 모달 ═══ -->
+<div id="profile-modal" style="
+  display:none;position:fixed;inset:0;z-index:999;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+">
+  <div style="
+    background:#0D1420;border:1px solid var(--border2);
+    border-radius:16px;padding:28px;width:90%;max-width:420px;
+  ">
+    <div style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:.15em;color:var(--accent);margin-bottom:8px;">PROFILE SETTINGS</div>
+    <div style="font-size:16px;font-weight:500;margin-bottom:20px;">프로필 편집</div>
+
+    <!-- 이미지 업로드 -->
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="position:relative;display:inline-block;">
+        <div id="modalProfAv" style="
+          width:80px;height:80px;border-radius:50%;
+          background:linear-gradient(135deg,var(--accent3),var(--accent));
+          display:flex;align-items:center;justify-content:center;
+          font-size:28px;font-weight:700;color:#fff;
+          border:2px solid var(--accent);cursor:pointer;overflow:hidden;
+          margin:0 auto 8px;
+        " onclick="document.getElementById('imgUpload').click()">
+          <img id="modalProfImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <span id="modalProfInitial">황</span>
+        </div>
+        <input type="file" id="imgUpload" accept="image/*" style="display:none" onchange="handleImgUpload(this)">
+        <button onclick="document.getElementById('imgUpload').click()" style="
+          background:rgba(0,180,255,.1);border:1px solid var(--border2);
+          border-radius:6px;color:var(--accent);font-size:11px;padding:4px 12px;
+          cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+        ">📷 사진 변경</button>
+        <button onclick="removeProfileImg()" style="
+          background:none;border:1px solid var(--border2);
+          border-radius:6px;color:var(--text3);font-size:11px;padding:4px 10px;
+          cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-left:4px;
+        ">제거</button>
+      </div>
+    </div>
+
+    <!-- 기본 정보 입력 -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+      <div>
+        <div class="field-lbl">이름</div>
+        <input class="field-inp" id="edit-name" value="황순주" placeholder="이름">
+      </div>
+      <div>
+        <div class="field-lbl">소속</div>
+        <input class="field-inp" id="edit-org" value="여누솔루션" placeholder="소속 회사">
+      </div>
+      <div>
+        <div class="field-lbl">직책·직함</div>
+        <input class="field-inp" id="edit-role" value="스마트제조 컨설턴트" placeholder="직책">
+      </div>
+      <div>
+        <div class="field-lbl">부제목 (사이드바 표시)</div>
+        <input class="field-inp" id="edit-title" value="여누솔루션 · 스마트제조 전문가" placeholder="부제목">
+      </div>
+      <div>
+        <div class="field-lbl">전문 분야</div>
+        <input class="field-inp" id="edit-spec" value="SFOW2.0 · DAS · DX" placeholder="전문 분야">
+      </div>
+      <div>
+        <div class="field-lbl">전화번호</div>
+        <input class="field-inp" id="edit-phone" value="010-8680-8440" placeholder="전화번호">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveProfile()" style="
+        flex:1;background:linear-gradient(90deg,rgba(0,180,255,.2),rgba(0,255,212,.1));
+        border:1px solid var(--accent);border-radius:8px;color:var(--accent);
+        font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;
+        padding:10px;cursor:pointer;
+      ">✓ 저장</button>
+      <button onclick="closeProfileModal()" style="
+        background:none;border:1px solid var(--border2);border-radius:8px;
+        color:var(--text2);font-family:'Noto Sans KR',sans-serif;
+        font-size:13px;padding:10px 16px;cursor:pointer;
+      ">취소</button>
+    </div>
+    <div id="profile-save-msg" style="margin-top:8px;font-size:12px;text-align:center;"></div>
+  </div>
+</div>
 
 <!-- ═══ API 키 설정 모달 ═══ -->
 <div id="api-modal" style="
@@ -1970,9 +2077,146 @@ async function testGasConnection() {
   }
 }
 
-// ═══════════════════════════════
-// FAQ
-// ═══════════════════════════════
+// ═══════════════════════════════════════════════
+// 프로필 편집
+// ═══════════════════════════════════════════════
+function openProfileModal() {
+  const modal = document.getElementById('profile-modal');
+  modal.style.display = 'flex';
+
+  // 저장된 값 불러오기
+  const p = loadProfile();
+  document.getElementById('edit-name').value  = p.name;
+  document.getElementById('edit-org').value   = p.org;
+  document.getElementById('edit-role').value  = p.role;
+  document.getElementById('edit-title').value = p.title;
+  document.getElementById('edit-spec').value  = p.spec;
+  document.getElementById('edit-phone').value = p.phone;
+
+  // 모달 미리보기 이미지
+  const modalImg  = document.getElementById('modalProfImg');
+  const modalInit = document.getElementById('modalProfInitial');
+  if (p.imgData) {
+    modalImg.src = p.imgData;
+    modalImg.style.display = 'block';
+    modalInit.style.display = 'none';
+  } else {
+    modalImg.style.display = 'none';
+    modalInit.style.display = 'block';
+    modalInit.textContent = p.name.charAt(0) || '황';
+  }
+  document.getElementById('profile-save-msg').innerHTML = '';
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-modal').style.display = 'none';
+}
+
+function handleImgUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    alert('이미지 크기는 2MB 이하로 업로드해주세요.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = e.target.result;
+    // 모달 미리보기 업데이트
+    const modalImg  = document.getElementById('modalProfImg');
+    const modalInit = document.getElementById('modalProfInitial');
+    modalImg.src = data;
+    modalImg.style.display = 'block';
+    modalInit.style.display = 'none';
+    // 임시 저장
+    sessionStorage.setItem('temp_img', data);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeProfileImg() {
+  sessionStorage.removeItem('temp_img');
+  localStorage.removeItem('prof_img');
+  const modalImg  = document.getElementById('modalProfImg');
+  const modalInit = document.getElementById('modalProfInitial');
+  modalImg.style.display = 'none';
+  modalInit.style.display = 'block';
+  document.getElementById('imgUpload').value = '';
+}
+
+function saveProfile() {
+  const name  = document.getElementById('edit-name').value.trim()  || '황순주';
+  const org   = document.getElementById('edit-org').value.trim()   || '여누솔루션';
+  const role  = document.getElementById('edit-role').value.trim()  || '스마트제조 컨설턴트';
+  const title = document.getElementById('edit-title').value.trim() || '여누솔루션 · 스마트제조 전문가';
+  const spec  = document.getElementById('edit-spec').value.trim()  || 'SFOW2.0 · DAS · DX';
+  const phone = document.getElementById('edit-phone').value.trim() || '';
+
+  // 이미지 저장
+  const tempImg = sessionStorage.getItem('temp_img');
+  if (tempImg) {
+    localStorage.setItem('prof_img', tempImg);
+    sessionStorage.removeItem('temp_img');
+  }
+
+  // 텍스트 저장
+  const prof = { name, org, role, title, spec, phone };
+  localStorage.setItem('jarvis_profile', JSON.stringify(prof));
+
+  // 사이드바 즉시 반영
+  applyProfile(prof, localStorage.getItem('prof_img'));
+
+  const msg = document.getElementById('profile-save-msg');
+  msg.innerHTML = '<span style="color:var(--accent2);">✓ 저장되었습니다!</span>';
+  setTimeout(() => closeProfileModal(), 1000);
+}
+
+function loadProfile() {
+  const def = {
+    name: '황순주', org: '여누솔루션',
+    role: '스마트제조 컨설턴트',
+    title: '여누솔루션 · 스마트제조 전문가',
+    spec: 'SFOW2.0 · DAS · DX',
+    phone: '010-8680-8440',
+    imgData: localStorage.getItem('prof_img') || ''
+  };
+  try {
+    const saved = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
+    return { ...def, ...saved, imgData: localStorage.getItem('prof_img') || '' };
+  } catch { return def; }
+}
+
+function applyProfile(p, imgData) {
+  // 이름·제목
+  document.getElementById('profName').textContent  = p.name;
+  document.getElementById('profTitle').textContent = p.title;
+
+  // 연락처 섹션
+  document.getElementById('infoOrg').textContent   = p.org;
+  document.getElementById('infoRole').textContent  = p.role;
+  document.getElementById('infoSpec').textContent  = p.spec;
+  document.getElementById('infoPhone').textContent = p.phone;
+
+  // 아바타 이미지
+  const profImg  = document.getElementById('profImg');
+  const profInit = document.getElementById('profInitial');
+  if (imgData) {
+    profImg.src = imgData;
+    profImg.style.display = 'block';
+    profInit.style.display = 'none';
+  } else {
+    profImg.style.display = 'none';
+    profInit.style.display = 'block';
+    profInit.textContent = p.name.charAt(0) || '황';
+  }
+}
+
+function initProfile() {
+  const p = loadProfile();
+  applyProfile(p, p.imgData);
+}
+
+
 const faqs = [
   { q: 'SFOW2.0이 무엇인가요?', a: 'SFOW2.0은 여누솔루션이 제공하는 SaaS 기반 클라우드 스마트팩토리 통합 플랫폼입니다. 생산지시·실적·재고·품질을 실시간으로 관리하고, 설비 IoT 데이터와 자동 연동되어 현장 전체를 하나의 화면에서 파악할 수 있습니다. 별도 서버 설치 없이 구독형으로 즉시 사용 가능합니다.' },
   { q: '데이터 연동은 어떻게 이루어지나요?', a: '설비 → DAS(IoT 센서 자동 수집) → 클라우드 → SFOW2.0 대시보드 순서로 이루어집니다. 기존 설비에 센서를 부착하면 가동률·생산량·불량·온도 등이 자동 수집되어 실시간 화면에 표시되고, 별도 수기 입력 없이 MES와 자동 연동됩니다.' },
@@ -2025,6 +2269,7 @@ tick();
 initDbPanel();
 updateApiSidebar();
 updateBanner();
+initProfile();
 </script>
 </body>
 </html>
