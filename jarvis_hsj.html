@@ -762,20 +762,27 @@ body::before{
         <!-- 통계 카드 -->
         <div class="db-stat-row">
           <div class="db-stat"><div class="db-stat-num" id="stat-total">—</div><div class="db-stat-lbl">전체 연락처</div></div>
-          <div class="db-stat"><div class="db-stat-num" id="stat-customer">—</div><div class="db-stat-lbl">고객</div></div>
-          <div class="db-stat"><div class="db-stat-num" id="stat-partner">—</div><div class="db-stat-lbl">협력사</div></div>
-          <div class="db-stat"><div class="db-stat-num" id="stat-vip">—</div><div class="db-stat-lbl">VIP</div></div>
+          <div class="db-stat"><div class="db-stat-num" id="stat-customer">—</div><div class="db-stat-lbl">고객DB</div></div>
+          <div class="db-stat"><div class="db-stat-num" id="stat-partner">—</div><div class="db-stat-lbl">협력사DB</div></div>
+          <div class="db-stat"><div class="db-stat-num" id="stat-vip">—</div><div class="db-stat-lbl">SI고객·기관</div></div>
         </div>
 
         <!-- 검색·필터 툴바 -->
         <div class="db-toolbar">
           <input class="field-inp" id="db-search" placeholder="회사명·담당자·이메일 검색..." style="flex:1;min-width:160px;" onkeydown="if(event.key==='Enter')doDbSearch()">
-          <select class="sel" id="db-cat" style="width:120px;">
+          <select class="sel" id="db-cat" style="width:140px;">
             <option value="">전체 분류</option>
-            <option value="고객">고객</option>
-            <option value="협력사">협력사</option>
-            <option value="VIP">VIP</option>
-            <option value="기타">기타</option>
+            <optgroup label="── 고객DB ──">
+              <option value="기존고객">기존고객</option>
+              <option value="잠재고객">잠재고객</option>
+              <option value="SI고객">SI고객</option>
+              <option value="기관">기관</option>
+            </optgroup>
+            <optgroup label="── 협력사DB ──">
+              <option value="파트너(기업)">파트너(기업)</option>
+              <option value="파트너(개인)">파트너(개인)</option>
+              <option value="구매처">구매처</option>
+            </optgroup>
           </select>
           <select class="sel" id="db-ind" style="width:140px;">
             <option value="">전체 업종</option>
@@ -800,10 +807,17 @@ body::before{
             <input class="field-inp" id="nc-em" placeholder="이메일 *">
             <input class="field-inp" id="nc-ph" placeholder="전화번호">
             <select class="sel" id="nc-type">
-              <option value="고객">고객</option>
-              <option value="협력사">협력사</option>
-              <option value="VIP">VIP</option>
-              <option value="기타">기타</option>
+              <optgroup label="── 고객DB ──">
+                <option value="기존고객">기존고객</option>
+                <option value="잠재고객">잠재고객</option>
+                <option value="SI고객">SI고객</option>
+                <option value="기관">기관</option>
+              </optgroup>
+              <optgroup label="── 협력사DB ──">
+                <option value="파트너(기업)">파트너(기업)</option>
+                <option value="파트너(개인)">파트너(개인)</option>
+                <option value="구매처">구매처</option>
+              </optgroup>
             </select>
             <select class="sel" id="nc-ind">
               <option value="식품제조업">식품제조업</option>
@@ -834,9 +848,17 @@ body::before{
             <div class="field-lbl">발송 분류</div>
             <select class="field-sel" id="bm-cat">
               <option value="">전체 (고객+협력사)</option>
-              <option value="고객">고객만</option>
-              <option value="협력사">협력사만</option>
-              <option value="VIP">VIP만</option>
+              <optgroup label="── 고객DB ──">
+                <option value="기존고객">기존고객</option>
+                <option value="잠재고객">잠재고객</option>
+                <option value="SI고객">SI고객</option>
+                <option value="기관">기관</option>
+              </optgroup>
+              <optgroup label="── 협력사DB ──">
+                <option value="파트너(기업)">파트너(기업)</option>
+                <option value="파트너(개인)">파트너(개인)</option>
+                <option value="구매처">구매처</option>
+              </optgroup>
             </select>
           </div>
           <div>
@@ -1040,9 +1062,17 @@ body::before{
           <div class="field-lbl">분류</div>
           <select class="field-sel" id="es-cat">
             <option value="">전체 (고객+협력사)</option>
-            <option value="고객">고객만</option>
-            <option value="협력사">협력사만</option>
-            <option value="VIP">VIP만</option>
+            <optgroup label="── 고객DB ──">
+              <option value="기존고객">기존고객</option>
+              <option value="잠재고객">잠재고객</option>
+              <option value="SI고객">SI고객</option>
+              <option value="기관">기관</option>
+            </optgroup>
+            <optgroup label="── 협력사DB ──">
+              <option value="파트너(기업)">파트너(기업)</option>
+              <option value="파트너(개인)">파트너(개인)</option>
+              <option value="구매처">구매처</option>
+            </optgroup>
           </select>
         </div>
         <div>
@@ -1810,7 +1840,12 @@ function renderEsList() {
   const body = document.getElementById('es-list-body');
   let html = '';
   esRecipients.forEach((c, i) => {
-    const bc = c.category === '고객' ? 'badge-customer' : c.category === 'VIP' ? 'badge-vip' : 'badge-partner';
+    const customerCats = ['기존고객','잠재고객','SI고객','기관'];
+    const partnerCats  = ['파트너(기업)','파트너(개인)','구매처'];
+    const bc = customerCats.includes(c.category) ? 'badge-customer'
+             : partnerCats.includes(c.category)  ? 'badge-partner'
+             : c.type === '고객' ? 'badge-customer'
+             : c.type === '협력사' ? 'badge-partner' : 'badge-etc';
     html += `<label style="
       display:flex;align-items:center;gap:10px;padding:8px 12px;
       border-bottom:1px solid var(--border);cursor:pointer;
@@ -2093,10 +2128,12 @@ async function doDbSearch() {
 
 // ── 통계 업데이트 ──
 function updateDbStats(data) {
+  const customerCats = ['기존고객','잠재고객','SI고객','기관'];
+  const partnerCats  = ['파트너(기업)','파트너(개인)','구매처'];
   document.getElementById('stat-total').textContent    = data.length;
-  document.getElementById('stat-customer').textContent = data.filter(d => d.category === '고객').length;
-  document.getElementById('stat-partner').textContent  = data.filter(d => d.category === '협력사').length;
-  document.getElementById('stat-vip').textContent      = data.filter(d => d.category === 'VIP').length;
+  document.getElementById('stat-customer').textContent = data.filter(d => customerCats.includes(d.category) || d.type === '고객').length;
+  document.getElementById('stat-partner').textContent  = data.filter(d => partnerCats.includes(d.category) || d.type === '협력사').length;
+  document.getElementById('stat-vip').textContent      = data.filter(d => d.category === 'SI고객' || d.category === '기관').length;
 }
 
 // ── 테이블 렌더링 ──
@@ -2113,9 +2150,12 @@ function renderDbTable(data) {
     <th>이메일</th><th>전화</th><th>업종</th><th>등록일</th>
   </tr>`;
   data.forEach(c => {
-    const badgeCls = c.category === '고객' ? 'badge-customer'
-                   : c.category === '협력사' ? 'badge-partner'
-                   : c.category === 'VIP' ? 'badge-vip' : 'badge-etc';
+    const customerCats = ['기존고객','잠재고객','SI고객','기관'];
+    const partnerCats  = ['파트너(기업)','파트너(개인)','구매처'];
+    const badgeCls = customerCats.includes(c.category) ? 'badge-customer'
+                   : partnerCats.includes(c.category)  ? 'badge-partner'
+                   : c.type === '고객' ? 'badge-customer'
+                   : c.type === '협력사' ? 'badge-partner' : 'badge-etc';
     html += `<tr>
       <td><span class="db-badge ${badgeCls}">${c.category || c.type}</span></td>
       <td style="font-weight:500;">${c.company}</td>
@@ -2179,7 +2219,12 @@ async function bmPreview() {
     }
     let html = '';
     res.data.slice(0, 10).forEach(c => {
-      const bc = c.category === '고객' ? 'badge-customer' : c.category === 'VIP' ? 'badge-vip' : 'badge-partner';
+      const customerCats = ['기존고객','잠재고객','SI고객','기관'];
+      const partnerCats  = ['파트너(기업)','파트너(개인)','구매처'];
+      const bc = customerCats.includes(c.category) ? 'badge-customer'
+               : partnerCats.includes(c.category)  ? 'badge-partner'
+               : c.type === '고객' ? 'badge-customer'
+               : c.type === '협력사' ? 'badge-partner' : 'badge-etc';
       html += `<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;">
         <span class="db-badge ${bc}">${c.category || c.type}</span>
         <span style="font-weight:500;min-width:90px;">${c.company}</span>
