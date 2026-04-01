@@ -576,6 +576,7 @@ body::before{
             <select class="sel" id="em-tp"><option value="신규 고객 유치">신규 고객 유치</option><option value="기존 고객 업데이트">기존 고객 업데이트</option><option value="지원사업 안내">지원사업 안내</option><option value="세일즈 팔로업">세일즈 팔로업</option></select>
             <select class="sel" id="em-ind"><option value="식품제조업">식품제조업 대상</option><option value="금속가공업">금속가공업 대상</option><option value="소비재 제조업">소비재 제조업 대상</option><option value="전체 제조업">전체 제조업 대상</option></select>
             <button class="gen-btn" onclick="genMkt('email')">✦ 이메일 콘텐츠 생성</button>
+            <button class="gen-btn" style="margin-top:6px;background:rgba(0,255,212,.08);border-color:var(--accent2);color:var(--accent2);" onclick="openEmailSendModal()">📬 DB에서 수신자 선택 후 발송</button>
           </div>
           <div class="mkt-card">
             <div class="mkt-card-top"><div class="mkt-icon ic-purple">📝</div><div class="mkt-card-title">블로그·보도자료</div></div>
@@ -999,7 +1000,104 @@ body::before{
   </div>
 </div>
 
-<!-- ═══ API 키 설정 모달 ═══ -->
+<!-- ═══ 이메일 발송 모달 ═══ -->
+<div id="email-send-modal" style="
+  display:none;position:fixed;inset:0;z-index:999;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+  align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto;
+">
+  <div style="
+    background:#0D1420;border:1px solid var(--border2);
+    border-radius:16px;padding:28px;width:90%;max-width:600px;margin-bottom:40px;
+  ">
+    <div style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:.15em;color:var(--accent2);margin-bottom:8px;">EMAIL SEND · DB 연동 발송</div>
+    <div style="font-size:16px;font-weight:500;margin-bottom:18px;">수신자 선택 후 이메일 발송</div>
+
+    <!-- 제목 입력 -->
+    <div style="margin-bottom:12px;">
+      <div class="field-lbl">메일 제목</div>
+      <input class="field-inp" id="es-subject" placeholder="예) [여누솔루션] SFOW2.0 신규 기능 안내" style="width:100%;">
+    </div>
+
+    <!-- 본문 입력 -->
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div class="field-lbl" style="margin-bottom:0;">메일 본문</div>
+        <button onclick="loadMktContent()" style="
+          background:rgba(0,180,255,.1);border:1px solid var(--border2);
+          border-radius:6px;color:var(--accent);font-size:11px;padding:3px 10px;
+          cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+        ">↓ 생성된 콘텐츠 불러오기</button>
+      </div>
+      <textarea class="field-ta" id="es-body" style="min-height:140px;width:100%;" placeholder="본문을 입력하거나 위 버튼으로 생성된 콘텐츠를 불러오세요.&#10;&#10;{회사명} {담당자} {업종} 은 자동 치환됩니다."></textarea>
+    </div>
+
+    <!-- 수신자 필터 -->
+    <div style="background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:.1em;color:var(--accent);text-transform:uppercase;margin-bottom:10px;">수신자 필터</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <div class="field-lbl">분류</div>
+          <select class="field-sel" id="es-cat">
+            <option value="">전체 (고객+협력사)</option>
+            <option value="고객">고객만</option>
+            <option value="협력사">협력사만</option>
+            <option value="VIP">VIP만</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-lbl">업종 필터</div>
+          <select class="field-sel" id="es-ind">
+            <option value="">전체 업종</option>
+            <option value="식품제조업">식품제조업</option>
+            <option value="금속가공업">금속가공업</option>
+            <option value="소비재 제조업">소비재 제조업</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="esLoadRecipients()" style="
+        width:100%;background:rgba(0,180,255,.08);border:1px solid var(--border2);
+        border-radius:8px;color:var(--accent);font-family:'Noto Sans KR',sans-serif;
+        font-size:12px;padding:8px;cursor:pointer;transition:all .15s;
+      ">🔍 수신자 목록 불러오기</button>
+    </div>
+
+    <!-- 수신자 목록 -->
+    <div id="es-recipient-list" style="display:none;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--text2);">수신자 목록 <span id="es-count" style="color:var(--accent);font-weight:500;"></span></div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="esSelectAll()" style="background:none;border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-size:11px;padding:3px 8px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">전체 선택</button>
+          <button onclick="esDeselectAll()" style="background:none;border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-size:11px;padding:3px 8px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">전체 해제</button>
+        </div>
+      </div>
+      <div id="es-list-body" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+    </div>
+
+    <!-- 발송 버튼 -->
+    <div id="es-send-area" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--text2);">선택된 수신자: <span id="es-selected-count" style="color:var(--accent2);font-weight:500;">0</span>명</div>
+      </div>
+      <button onclick="esSend()" id="es-send-btn" style="
+        width:100%;background:linear-gradient(90deg,rgba(0,255,212,.15),rgba(0,180,255,.1));
+        border:1px solid var(--accent2);border-radius:10px;color:var(--accent2);
+        font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:500;
+        padding:12px;cursor:pointer;transition:all .15s;box-shadow:0 0 12px var(--glow2);
+      ">📬 선택한 수신자에게 발송</button>
+    </div>
+
+    <div id="es-result" style="margin-top:10px;font-size:12px;min-height:18px;text-align:center;"></div>
+
+    <div style="margin-top:14px;text-align:center;">
+      <button onclick="closeEmailSendModal()" style="
+        background:none;border:1px solid var(--border2);border-radius:8px;
+        color:var(--text2);font-family:'Noto Sans KR',sans-serif;
+        font-size:13px;padding:8px 24px;cursor:pointer;
+      ">닫기</button>
+    </div>
+  </div>
+</div>
 <div id="api-modal" style="
   display:none;position:fixed;inset:0;z-index:999;
   background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
@@ -1640,7 +1738,165 @@ function cpSubj() {
 }
 
 // ═══════════════════════════════════════════════
-// GOOGLE SHEETS DB 연동
+// 이메일 DB 선택 발송
+// ═══════════════════════════════════════════════
+let esRecipients = [];
+
+function openEmailSendModal() {
+  document.getElementById('email-send-modal').style.display = 'flex';
+  document.getElementById('es-result').innerHTML = '';
+  // 생성된 콘텐츠 자동 로드 시도
+  loadMktContent();
+}
+
+function closeEmailSendModal() {
+  document.getElementById('email-send-modal').style.display = 'none';
+}
+
+// 마케팅 패널에서 생성된 콘텐츠 불러오기
+function loadMktContent() {
+  const bodyEl  = document.getElementById('mkt-res-body');
+  const titleEl = document.getElementById('mkt-res-title');
+  if (!bodyEl || !bodyEl.textContent.trim()) {
+    document.getElementById('es-result').innerHTML =
+      '<span style="color:var(--text2);">먼저 이메일 콘텐츠를 생성해주세요.</span>';
+    return;
+  }
+  // 제목 파싱 시도 (첫 줄이 제목일 경우)
+  const lines = bodyEl.textContent.trim().split('\n');
+  let subject = '', body = bodyEl.textContent.trim();
+  if (lines[0].startsWith('제목:') || lines[0].startsWith('Subject:')) {
+    subject = lines[0].replace(/^(제목:|Subject:)\s*/i, '').trim();
+    body = lines.slice(1).join('\n').trim();
+  }
+  if (subject) document.getElementById('es-subject').value = subject;
+  document.getElementById('es-body').value = body;
+  document.getElementById('es-result').innerHTML =
+    '<span style="color:var(--accent2);">✓ 콘텐츠를 불러왔습니다.</span>';
+  setTimeout(() => { document.getElementById('es-result').innerHTML = ''; }, 2000);
+}
+
+// 수신자 목록 불러오기
+async function esLoadRecipients() {
+  if (!checkGasUrl()) return;
+  const cat = document.getElementById('es-cat').value;
+  const ind = document.getElementById('es-ind').value;
+  const listDiv = document.getElementById('es-recipient-list');
+  const listBody = document.getElementById('es-list-body');
+  const sendArea = document.getElementById('es-send-area');
+
+  listDiv.style.display = 'block';
+  listBody.innerHTML = '<div style="font-size:12px;color:var(--text2);padding:10px;">불러오는 중...</div>';
+  sendArea.style.display = 'none';
+
+  try {
+    const res = await gasGet({ action: 'getContacts', category: cat, industry: ind });
+    if (!res.success || res.count === 0) {
+      listBody.innerHTML = '<div style="font-size:12px;color:var(--text2);padding:10px;">해당 조건의 연락처가 없습니다.</div>';
+      return;
+    }
+    esRecipients = res.data;
+    document.getElementById('es-count').textContent = res.count + '명';
+    renderEsList();
+    sendArea.style.display = 'block';
+    updateEsCount();
+  } catch (e) {
+    listBody.innerHTML = `<div style="color:var(--danger);font-size:12px;padding:10px;">오류: ${e.message}</div>`;
+  }
+}
+
+// 수신자 목록 렌더링
+function renderEsList() {
+  const body = document.getElementById('es-list-body');
+  let html = '';
+  esRecipients.forEach((c, i) => {
+    const bc = c.category === '고객' ? 'badge-customer' : c.category === 'VIP' ? 'badge-vip' : 'badge-partner';
+    html += `<label style="
+      display:flex;align-items:center;gap:10px;padding:8px 12px;
+      border-bottom:1px solid var(--border);cursor:pointer;
+      transition:background .1s;font-size:12px;
+    " onmouseover="this.style.background='rgba(0,180,255,.04)'" onmouseout="this.style.background='none'">
+      <input type="checkbox" class="es-chk" data-idx="${i}" checked
+        onchange="updateEsCount()"
+        style="width:14px;height:14px;cursor:pointer;accent-color:var(--accent2);">
+      <span class="db-badge ${bc}" style="flex-shrink:0;">${c.category || c.type}</span>
+      <span style="font-weight:500;min-width:80px;color:var(--text);">${c.company || ''}</span>
+      <span style="color:var(--text2);min-width:60px;">${c.contact || ''}</span>
+      <span style="color:var(--accent2);margin-left:auto;">${c.email}</span>
+    </label>`;
+  });
+  body.innerHTML = html;
+}
+
+function esSelectAll() {
+  document.querySelectorAll('.es-chk').forEach(c => c.checked = true);
+  updateEsCount();
+}
+
+function esDeselectAll() {
+  document.querySelectorAll('.es-chk').forEach(c => c.checked = false);
+  updateEsCount();
+}
+
+function updateEsCount() {
+  const cnt = document.querySelectorAll('.es-chk:checked').length;
+  document.getElementById('es-selected-count').textContent = cnt;
+}
+
+// 실제 발송
+async function esSend() {
+  const subject = document.getElementById('es-subject').value.trim();
+  const body    = document.getElementById('es-body').value.trim();
+  const result  = document.getElementById('es-result');
+
+  if (!subject) { result.innerHTML = '<span style="color:var(--danger);">제목을 입력해주세요.</span>'; return; }
+  if (!body)    { result.innerHTML = '<span style="color:var(--danger);">본문을 입력해주세요.</span>'; return; }
+
+  const selected = [...document.querySelectorAll('.es-chk:checked')]
+    .map(c => esRecipients[parseInt(c.dataset.idx)])
+    .filter(c => c && c.email);
+
+  if (selected.length === 0) {
+    result.innerHTML = '<span style="color:var(--danger);">발송할 수신자를 선택해주세요.</span>';
+    return;
+  }
+
+  if (!confirm(`${selected.length}명에게 실제 이메일이 발송됩니다. 진행할까요?`)) return;
+
+  const btn = document.getElementById('es-send-btn');
+  btn.disabled = true;
+  btn.textContent = '⟳ 발송 중...';
+  result.innerHTML = '<span style="color:var(--text2);">발송 중... 잠시만 기다려주세요.</span>';
+
+  try {
+    const res = await gasPost({
+      action  : 'sendSelectedMail',
+      emails  : selected.map(c => ({
+        email   : c.email,
+        company : c.company  || '',
+        contact : c.contact  || '담당자',
+        industry: c.industry || '',
+        category: c.category || ''
+      })),
+      subject,
+      body
+    });
+
+    if (res.success) {
+      result.innerHTML = `<span style="color:var(--accent2);">✓ ${res.message}</span>`;
+    } else {
+      result.innerHTML = `<span style="color:var(--danger);">✗ ${res.error}</span>`;
+    }
+  } catch (e) {
+    result.innerHTML = `<span style="color:var(--danger);">✗ ${e.message}</span>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📬 선택한 수신자에게 발송';
+}
+
+// ═══════════════════════════════════════════════
+// 이메일 DB 선택 발송
 // ═══════════════════════════════════════════════
 let GAS_URL = localStorage.getItem('gas_url') || '';
 
