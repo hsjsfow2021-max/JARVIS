@@ -616,22 +616,35 @@ body::before{
             </div>
             <div class="res-body" id="mkt-res-body"></div>
           </div>
-          <!-- 네이버 블로그 발행 안내 -->
+          <!-- 네이버 블로그 발행 안내 (반자동) -->
           <div id="naver-guide" style="display:none;margin-top:10px;background:rgba(3,199,90,.07);border:1px solid rgba(3,199,90,.25);border-radius:10px;padding:14px;">
-            <div style="font-size:12px;font-weight:500;color:#03C75A;margin-bottom:10px;">📝 네이버 블로그 발행</div>
-            <div style="display:flex;gap:8px;">
-              <button onclick="openNaverPostModal()" style="
+            <div style="font-size:12px;font-weight:500;color:#03C75A;margin-bottom:6px;">📝 네이버 블로그 발행</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:10px;">
+              ① 아래 버튼 클릭 → 내용 자동 복사 + 블로그 작성 페이지 오픈<br>
+              ② 제목 입력 후 <kbd style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;">Ctrl+V</kbd> 붙여넣기 → 발행!
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+              <button onclick="openNaverBlog()" style="
                 flex:1;background:rgba(3,199,90,.15);border:1px solid rgba(3,199,90,.4);
                 border-radius:8px;color:#03C75A;font-family:'Noto Sans KR',sans-serif;
                 font-size:13px;font-weight:500;padding:9px;cursor:pointer;
-              ">🟢 네이버 블로그에 자동 발행</button>
-              <button onclick="openNaverModal()" style="
-                background:none;border:1px solid rgba(3,199,90,.3);border-radius:8px;
-                color:#03C75A;font-family:'Noto Sans KR',sans-serif;
-                font-size:11px;padding:9px 12px;cursor:pointer;
-              " title="네이버 로그인 설정">⚙ 로그인</button>
+              ">🟢 네이버 블로그 작성 페이지 열기</button>
+              <button onclick="cp('mkt-res-body',this)" style="
+                background:none;border:1px solid var(--border2);border-radius:8px;
+                color:var(--text2);font-family:'Noto Sans KR',sans-serif;
+                font-size:12px;padding:9px 12px;cursor:pointer;flex-shrink:0;
+              ">복사</button>
             </div>
-            <div id="naver-login-badge" style="margin-top:8px;font-size:11px;color:var(--text3);"></div>
+            <div style="font-size:11px;color:var(--text3);">
+              💡 내 블로그 주소:
+              <input id="naver-blog-id" placeholder="네이버 아이디" style="
+                background:rgba(255,255,255,.07);border:1px solid var(--border2);
+                border-radius:5px;color:var(--text);font-size:11px;padding:3px 8px;
+                width:130px;outline:none;margin-left:4px;
+              " oninput="localStorage.setItem('naver_blog_id',this.value)">
+              <span style="color:var(--text3);">.blog.me</span>
+            </div>
+            <div id="naver-copy-msg" style="margin-top:6px;font-size:11px;color:var(--accent2);min-height:14px;"></div>
           </div>
         </div>
       </div>
@@ -1770,145 +1783,49 @@ async function genMkt(type) {
 }
 
 // ═══════════════════════════════════════════════
-// 네이버 블로그 자동 발행 (OAuth 2.0)
+// 네이버 블로그 반자동 발행
 // ═══════════════════════════════════════════════
-function openNaverModal() {
-  document.getElementById('naver-login-modal').style.display = 'flex';
-  const savedId = localStorage.getItem('naver_client_id') || '';
-  if (savedId) document.getElementById('naver-client-id-input').value = savedId;
-  naverCheckStatus();
-}
-
-function closeNaverModal() {
-  document.getElementById('naver-login-modal').style.display = 'none';
-}
-
-function openNaverPostModal() {
-  document.getElementById('naver-post-modal').style.display = 'flex';
-  document.getElementById('npost-result').innerHTML = '';
-  npostLoadContent();
-}
-
-function closeNaverPostModal() {
-  document.getElementById('naver-post-modal').style.display = 'none';
-}
-
 function postToNaver() {
   const guide = document.getElementById('naver-guide');
   guide.style.display = 'block';
   guide.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  updateNaverLoginBadge(localStorage.getItem('naver_logged_in') === 'true');
+  // 저장된 네이버 ID 불러오기
+  const savedId = localStorage.getItem('naver_blog_id') || '';
+  if (savedId) document.getElementById('naver-blog-id').value = savedId;
 }
 
-function npostLoadContent() {
+function openNaverBlog() {
+  const naverId = document.getElementById('naver-blog-id').value.trim()
+                  || localStorage.getItem('naver_blog_id') || '';
+  // 내용 클립보드 자동 복사
   const content = document.getElementById('mkt-res-body').textContent.trim();
-  if (!content) return;
-  const lines = content.split('\n');
-  let title = '', body = content;
-  const titleLine = lines.find(l => l.startsWith('## 제목:') || l.startsWith('# '));
-  if (titleLine) {
-    title = titleLine.replace(/^##?\s*(제목:)?\s*/, '').replace(/\*+/g,'').trim();
-    body  = lines.filter(l => l !== titleLine).join('\n').trim();
-  } else {
-    title = lines[0].replace(/^\*+/, '').trim().substring(0, 60);
+  const msgEl   = document.getElementById('naver-copy-msg');
+  if (content) {
+    navigator.clipboard.writeText(content).then(() => {
+      msgEl.textContent = '✓ 내용이 복사되었습니다! 블로그에서 Ctrl+V 로 붙여넣으세요.';
+      setTimeout(() => { msgEl.textContent = ''; }, 4000);
+    }).catch(() => {
+      msgEl.textContent = '자동 복사 실패 — 위 복사 버튼을 눌러주세요.';
+    });
   }
-  document.getElementById('npost-title').value   = title;
-  document.getElementById('npost-content').value = body;
+  // 블로그 작성 페이지 열기
+  const url = naverId
+    ? `https://blog.naver.com/${naverId}/postwrite`
+    : 'https://blog.naver.com/PostWriteForm.naver';
+  window.open(url, '_blank');
 }
 
-function naverLogin() {
-  const clientId = document.getElementById('naver-client-id-input').value.trim();
-  if (!clientId) {
-    document.getElementById('naver-modal-msg').innerHTML =
-      '<span style="color:var(--danger);">Client ID를 입력해주세요.</span>';
-    return;
-  }
-  localStorage.setItem('naver_client_id', clientId);
-  const callbackUrl = encodeURIComponent('https://hsjsfow2021-max.github.io/JARVIS/jarvis_hsj.html');
-  const state = 'JARVIS_' + Date.now();
-  localStorage.setItem('naver_oauth_state', state);
-  const authUrl = 'https://nid.naver.com/oauth2.0/authorize'
-    + '?response_type=code&client_id=' + clientId
-    + '&redirect_uri=' + callbackUrl + '&state=' + state;
-  document.getElementById('naver-modal-msg').innerHTML =
-    '<span style="color:#03C75A;">네이버 로그인 페이지로 이동합니다...</span>';
-  window.location.href = authUrl;
-}
-
-async function naverHandleCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  const state = params.get('state');
-  if (!code) return;
-  const savedState = localStorage.getItem('naver_oauth_state');
-  if (state !== savedState) return;
-  window.history.replaceState({}, '', window.location.pathname);
-  if (!GAS_URL) return;
-  try {
-    const res = await gasGet({ action: 'naverGetToken', code });
-    if (res.success) {
-      localStorage.setItem('naver_logged_in', 'true');
-      updateNaverLoginBadge(true, '로그인 완료');
-      alert('✓ 네이버 블로그 연동 완료! 이제 자동 포스팅을 사용할 수 있습니다.');
-    }
-  } catch (e) { console.log('Naver callback:', e); }
-}
-
-async function naverCheckStatus() {
-  const el = document.getElementById('naver-login-status');
-  if (!el || !GAS_URL) return;
-  el.textContent = '확인 중...';
-  try {
-    const res = await gasGet({ action: 'naverGetTokenInfo' });
-    if (res.success && res.hasToken) {
-      el.innerHTML = `<span style="color:#03C75A;">✓ 로그인됨 — ${res.nickname || '네이버 계정'}</span>`;
-      localStorage.setItem('naver_logged_in', 'true');
-      updateNaverLoginBadge(true, res.nickname);
-    } else {
-      el.innerHTML = '<span style="color:var(--danger);">미로그인 — 아래 버튼으로 로그인해주세요</span>';
-      localStorage.removeItem('naver_logged_in');
-      updateNaverLoginBadge(false);
-    }
-  } catch (e) {
-    el.innerHTML = `<span style="color:var(--danger);">확인 실패: ${e.message}</span>`;
-  }
-}
-
-function updateNaverLoginBadge(loggedIn, nickname) {
-  const badge = document.getElementById('naver-login-badge');
-  if (!badge) return;
-  badge.innerHTML = loggedIn
-    ? `<span style="color:#03C75A;">● 네이버 로그인됨${nickname ? ' (' + nickname + ')' : ''}</span>`
-    : '<span style="color:var(--danger);">● 미로그인 — ⚙ 로그인 버튼을 눌러주세요</span>';
-}
-
-async function npostSubmit() {
-  const title   = document.getElementById('npost-title').value.trim();
-  const content = document.getElementById('npost-content').value.trim();
-  const tags    = document.getElementById('npost-tags').value.trim();
-  const result  = document.getElementById('npost-result');
-  if (!title)   { result.innerHTML = '<span style="color:var(--danger);">제목을 입력해주세요.</span>'; return; }
-  if (!content) { result.innerHTML = '<span style="color:var(--danger);">본문을 입력해주세요.</span>'; return; }
-  if (!GAS_URL) { result.innerHTML = '<span style="color:var(--danger);">Apps Script URL을 먼저 설정해주세요.</span>'; return; }
-  const btn = document.getElementById('npost-btn');
-  btn.disabled = true; btn.textContent = '⟳ 발행 중...';
-  result.innerHTML = '<span style="color:var(--text2);">네이버 블로그에 포스팅 중...</span>';
-  try {
-    const res = await gasPost({ action: 'naverPost', title, content, tags });
-    if (res.success) {
-      result.innerHTML = `<span style="color:#03C75A;">✓ ${res.message}</span>`;
-      setTimeout(() => closeNaverPostModal(), 2000);
-    } else {
-      result.innerHTML = `<span style="color:var(--danger);">✗ ${res.error}</span>`;
-      if (res.error && res.error.includes('로그인')) {
-        setTimeout(() => { closeNaverPostModal(); openNaverModal(); }, 1500);
-      }
-    }
-  } catch (e) {
-    result.innerHTML = `<span style="color:var(--danger);">✗ ${e.message}</span>`;
-  }
-  btn.disabled = false; btn.textContent = '🟢 네이버 블로그에 발행';
-}
+// (미사용 함수 — 하위 호환 유지)
+function openNaverModal()     {}
+function closeNaverModal()    {}
+function openNaverPostModal() {}
+function closeNaverPostModal(){}
+function naverLogin()         {}
+async function naverHandleCallback() {}
+async function naverCheckStatus()    {}
+function updateNaverLoginBadge()     {}
+async function npostSubmit()         {}
+function npostLoadContent()          {}
 
 // ═══════════════════════════════════════════════
 // CS
@@ -2861,8 +2778,6 @@ initDbPanel();
 updateApiSidebar();
 updateBanner();
 initProfile();
-// 네이버 OAuth 콜백 처리 (로그인 후 리다이렉트 시)
-naverHandleCallback();
 </script>
 </body>
 </html>
