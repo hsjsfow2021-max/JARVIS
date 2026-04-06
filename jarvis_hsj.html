@@ -636,13 +636,12 @@ body::before{
               ">복사</button>
             </div>
             <div style="font-size:11px;color:var(--text3);">
-              💡 내 블로그 주소:
+              💡 내 블로그 주소: https://blog.naver.com/
               <input id="naver-blog-id" placeholder="네이버 아이디" style="
                 background:rgba(255,255,255,.07);border:1px solid var(--border2);
                 border-radius:5px;color:var(--text);font-size:11px;padding:3px 8px;
-                width:130px;outline:none;margin-left:4px;
+                width:130px;outline:none;margin-left:2px;
               " oninput="localStorage.setItem('naver_blog_id',this.value)">
-              <span style="color:var(--text3);">.blog.me</span>
             </div>
             <div id="naver-copy-msg" style="margin-top:6px;font-size:11px;color:var(--accent2);min-height:14px;"></div>
           </div>
@@ -1808,7 +1807,7 @@ function openNaverBlog() {
       msgEl.textContent = '자동 복사 실패 — 위 복사 버튼을 눌러주세요.';
     });
   }
-  // 블로그 작성 페이지 열기
+  // 블로그 작성 페이지 열기 (새 형식: https://blog.naver.com/아이디)
   const url = naverId
     ? `https://blog.naver.com/${naverId}/postwrite`
     : 'https://blog.naver.com/PostWriteForm.naver';
